@@ -141,7 +141,9 @@ export class ApiServices {
   // ===== ARTISTAS =====
   // GET /api/artistas - Obtener todos los artistas
   getArtistas(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/artistas`);
+    return this.http.get(`${this.apiUrl}/artistas`, { 
+      headers: this.getAuthHeaders() 
+    });
   }
 
   // POST /api/artistas - Crear artista
@@ -159,7 +161,7 @@ export class ApiServices {
   }
 
   // DELETE /api/artistas/:id - Eliminar artista
-  eliminarArtista(id: string): Observable<any> {
+  eliminarArtista(id: any): Observable<any> {
     return this.http.delete(`${this.apiUrl}/artistas/${id}`, { 
       headers: this.getAuthHeaders() 
     });

@@ -98,8 +98,7 @@ export class DashboardComponent implements OnInit {
 
   // Artistas
   navigateToArtists(): void {
-    console.log('🎤 Navegando a gestión de artistas');
-    alert('Funcionalidad: Ver todos los artistas - Por implementar');
+    this.router.navigate(['/crear-artistas']);
   }
 
   openAddArtistModal(): void {
