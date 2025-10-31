@@ -63,8 +63,24 @@ export class ApiServices {
   // ===== CANCIONES =====
   // GET /api/canciones - Obtener todas las canciones
   getCanciones(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/canciones`);
+    return this.http.get(`${this.apiUrl}/canciones`, { headers: this.getAuthHeaders() });
   }
+
+  // ✅ NUEVO: Crear canción con FormData
+crearCancionFormData(formData: FormData): Observable<any> {
+  console.log('🚀 API Service - Enviando FormData con campo "datos"');
+  return this.http.post(`${this.apiUrl}/canciones`, formData, { 
+    headers: this.getAuthHeaders() 
+  });
+}
+
+// ✅ NUEVO: Actualizar canción con FormData
+actualizarCancionFormData(id: string, formData: FormData): Observable<any> {
+  console.log('🚀 API Service - Actualizando con FormData, ID:', id);
+  return this.http.put(`${this.apiUrl}/canciones/${id}`, formData, { 
+    headers: this.getAuthHeaders() 
+  });
+}
 
   // POST /api/canciones - Crear canción
   crearCancion(songData: any): Observable<any> {
@@ -114,7 +130,9 @@ export class ApiServices {
   // ===== ÁLBUMES =====
   // GET /api/albumes - Obtener todos los álbumes
   getAlbumes(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/albumes`);
+    return this.http.get(`${this.apiUrl}/albumes`, { 
+      headers: this.getAuthHeaders() 
+    });
   }
 
   // POST /api/albumes - Crear álbum

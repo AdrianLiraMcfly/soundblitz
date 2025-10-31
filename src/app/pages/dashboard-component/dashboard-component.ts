@@ -3,10 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiServices } from '../shared/services/api-services';
+import { NavbarComponent } from '../shared/components/navbar-component/navbar-component';
 
 @Component({
   selector: 'app-dashboard-component',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NavbarComponent],
   templateUrl: './dashboard-component.html',
   styleUrl: './dashboard-component.css'
 })

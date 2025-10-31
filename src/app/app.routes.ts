@@ -23,19 +23,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/admin/crear-canciones-component/crear-canciones-component').then(m => m.CrearCancionesComponent)
     },
     {
+        path: 'crear-albumes',
+        loadComponent: () => import('./pages/admin/crear-albumes-component/crear-albumes-component').then(m => m.CrearAlbumesComponent)
+    },
+    {
         path: 'crear-artistas',
         loadComponent: () => import('./pages/admin/crear-artistas-component/crear-artistas-component').then(m => m.CrearArtistasComponent)
-    },
-    {
-        path: 'canciones',
-        loadComponent: () => import('./pages/admin/canciones-component/canciones-component').then(m => m.CancionesComponent)
-    },
-    {
-        path: 'albumes',
-        loadComponent: () => import('./pages/admin/album-component/album-component').then(m => m.AlbumComponent)
-    },
-    {
-        path: 'artistas',
-        loadComponent: () => import('./pages/admin/artistas-component/artistas-component').then(m => m.ArtistasComponent)
     },
 ];

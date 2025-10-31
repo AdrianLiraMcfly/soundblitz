@@ -2,30 +2,34 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiServices } from '../../shared/services/api-services';
+import { NavbarComponent } from '../../shared/components/navbar-component/navbar-component';
 
 interface Artista {
   id?: any;
   nombre: string;
   canciones?: number;
   albumes?: number;
+  activo?: number; // ✅ Cambiado a number (0 o 1)
   fechaCreacion?: Date;
 }
 
 @Component({
   selector: 'app-crear-artistas-component',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NavbarComponent],
   templateUrl: './crear-artistas-component.html',
   styleUrl: './crear-artistas-component.css'
 })
 export class CrearArtistasComponent implements OnInit {
   artistas: Artista[] = [];
+  artistasOriginales: Artista[] = []; // ✅ Mantener datos originales
   nuevoArtista: string = '';
   searchTerm: string = '';
   sortOrder: string = 'nombre-asc';
   
   // Estadísticas
   totalArtistas: number = 0;
+  artistasActivos: number = 0; // ✅ Nueva estadística
   nuevosEsteMes: number = 0;
   artistaMasPopular: string = '-';
   
@@ -52,8 +56,8 @@ export class CrearArtistasComponent implements OnInit {
     
     this.apiServices.getArtistas().subscribe({
       next: (response) => {
-        this.artistas = response.data || response;
-        this.totalArtistas = this.artistas.length;
+        this.artistasOriginales = response.data || response;
+        this.totalArtistas = this.artistasOriginales.length;
         this.calcularEstadisticas();
         this.aplicarFiltrosYOrdenamiento();
         this.loading = false;
@@ -62,6 +66,8 @@ export class CrearArtistasComponent implements OnInit {
         console.error('Error al cargar artistas:', error);
         this.error = 'Error al cargar los artistas. Por favor, intenta de nuevo.';
         this.loading = false;
+        this.artistasOriginales = [];
+        this.artistas = [];
       }
     });
   }
@@ -80,7 +86,8 @@ export class CrearArtistasComponent implements OnInit {
     this.successMessage = '';
 
     const artistaData = {
-      nombre: this.nuevoArtista.trim()
+      nombre: this.nuevoArtista.trim(),
+      activo: 1 // ✅ Por defecto activo
     };
 
     this.apiServices.crearArtista(artistaData).subscribe({
@@ -89,7 +96,6 @@ export class CrearArtistasComponent implements OnInit {
         this.nuevoArtista = '';
         this.cargarArtistas();
         
-        // Limpiar mensaje después de 3 segundos
         setTimeout(() => {
           this.successMessage = '';
         }, 3000);
@@ -110,7 +116,8 @@ export class CrearArtistasComponent implements OnInit {
       this.loading = true;
       
       const artistaData = {
-        nombre: nuevoNombre.trim()
+        nombre: nuevoNombre.trim(),
+        activo: artista.activo // ✅ Mantener estado actual
       };
 
       this.apiServices.actualizarArtista(artista.id, artistaData).subscribe({
@@ -131,9 +138,40 @@ export class CrearArtistasComponent implements OnInit {
     }
   }
 
+  // ✅ NUEVO: Toggle estado activo/inactivo
+  toggleEstadoArtista(artista: Artista): void {
+    const nuevoEstado = artista.activo === 1 ? 0 : 1;
+    const accion = nuevoEstado === 1 ? 'activar' : 'desactivar';
+    
+    if (confirm(`¿Estás seguro de ${accion} al artista "${artista.nombre}"?`)) {
+      this.loading = true;
+      
+      const artistaData = {
+        nombre: artista.nombre,
+        activo: nuevoEstado
+      };
+
+      this.apiServices.actualizarArtista(artista.id, artistaData).subscribe({
+        next: (response) => {
+          this.successMessage = `Artista "${artista.nombre}" ${nuevoEstado === 1 ? 'activado' : 'desactivado'} exitosamente`;
+          this.cargarArtistas();
+          
+          setTimeout(() => {
+            this.successMessage = '';
+          }, 3000);
+        },
+        error: (error) => {
+          console.error('Error al cambiar estado del artista:', error);
+          this.error = 'Error al cambiar el estado del artista. Por favor, intenta de nuevo.';
+          this.loading = false;
+        }
+      });
+    }
+  }
+
   // Eliminar artista
   eliminarArtista(artista: Artista): void {
-    if (confirm(`¿Estás seguro de eliminar al artista "${artista.nombre}"?`)) {
+    if (confirm(`¿Estás seguro de eliminar al artista "${artista.nombre}"? Esta acción no se puede deshacer.`)) {
       this.loading = true;
 
       this.apiServices.eliminarArtista(artista.id).subscribe({
@@ -156,19 +194,21 @@ export class CrearArtistasComponent implements OnInit {
 
   // Ver detalles del artista
   verDetalles(artista: Artista): void {
-    // Aquí puedes navegar a una página de detalles o abrir un modal
-    console.log('Ver detalles de:', artista);
-    alert(`Detalles de ${artista.nombre}\n\nCanciones: ${artista.canciones || 0}\nÁlbumes: ${artista.albumes || 0}`);
+    const estado = artista.activo === 1 ? 'Activo' : 'Inactivo';
+    alert(`Detalles de ${artista.nombre}\n\nCanciones: ${artista.canciones || 0}\nÁlbumes: ${artista.albumes || 0}\nEstado: ${estado}`);
   }
 
   // Calcular estadísticas
   calcularEstadisticas(): void {
+    // Artistas activos
+    this.artistasActivos = this.artistasOriginales.filter(a => a.activo === 1).length;
+    
     // Nuevos este mes
     const inicioMes = new Date();
     inicioMes.setDate(1);
     inicioMes.setHours(0, 0, 0, 0);
     
-    this.nuevosEsteMes = this.artistas.filter(artista => {
+    this.nuevosEsteMes = this.artistasOriginales.filter(artista => {
       if (artista.fechaCreacion) {
         const fecha = new Date(artista.fechaCreacion);
         return fecha >= inicioMes;
@@ -177,17 +217,17 @@ export class CrearArtistasComponent implements OnInit {
     }).length;
 
     // Artista más popular (el que tenga más canciones)
-    if (this.artistas.length > 0) {
-      const masPopular = this.artistas.reduce((prev, current) => 
+    if (this.artistasOriginales.length > 0) {
+      const masPopular = this.artistasOriginales.reduce((prev, current) => 
         (current.canciones || 0) > (prev.canciones || 0) ? current : prev
       );
       this.artistaMasPopular = masPopular.nombre;
     }
   }
 
-  // Aplicar filtros y ordenamiento
+  // ✅ Aplicar filtros y ordenamiento - CORREGIDO
   aplicarFiltrosYOrdenamiento(): void {
-    let artistasFiltrados = [...this.artistas];
+    let artistasFiltrados = [...this.artistasOriginales];
 
     // Filtrar por búsqueda
     if (this.searchTerm) {
@@ -214,31 +254,39 @@ export class CrearArtistasComponent implements OnInit {
       case 'popular':
         artistasFiltrados.sort((a, b) => (b.canciones || 0) - (a.canciones || 0));
         break;
+      case 'activo': // ✅ Nuevo: ordenar por estado
+        artistasFiltrados.sort((a, b) => (b.activo || 0) - (a.activo || 0));
+        break;
     }
 
     this.artistas = artistasFiltrados;
     this.totalPages = Math.ceil(this.artistas.length / this.itemsPerPage);
+    
+    if (this.currentPage > this.totalPages && this.totalPages > 0) {
+      this.currentPage = 1;
+    }
   }
 
-  // Buscar artistas
+  // ✅ Verificar si el artista está activo
+  isActivo(artista: Artista): boolean {
+    return artista.activo === 1;
+  }
+
   onSearch(): void {
     this.currentPage = 1;
     this.aplicarFiltrosYOrdenamiento();
   }
 
-  // Cambiar ordenamiento
   onSortChange(): void {
     this.aplicarFiltrosYOrdenamiento();
   }
 
-  // Obtener artistas paginados
   get artistasPaginados(): Artista[] {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
     return this.artistas.slice(startIndex, endIndex);
   }
 
-  // Obtener iniciales del artista
   getIniciales(nombre: string): string {
     const palabras = nombre.trim().split(' ');
     if (palabras.length === 1) {
@@ -247,7 +295,6 @@ export class CrearArtistasComponent implements OnInit {
     return (palabras[0][0] + palabras[1][0]).toUpperCase();
   }
 
-  // Obtener color aleatorio para avatar
   getColorAvatar(index: number): string {
     const colores = [
       'from-purple-500 to-pink-500',
@@ -260,7 +307,6 @@ export class CrearArtistasComponent implements OnInit {
     return colores[index % colores.length];
   }
 
-  // Formatear fecha
   formatearFecha(fecha: Date | undefined): string {
     if (!fecha) return '-';
     const date = new Date(fecha);
@@ -271,7 +317,6 @@ export class CrearArtistasComponent implements OnInit {
     });
   }
 
-  // Navegación de paginación
   irAPagina(pagina: number): void {
     if (pagina >= 1 && pagina <= this.totalPages) {
       this.currentPage = pagina;
@@ -290,7 +335,6 @@ export class CrearArtistasComponent implements OnInit {
     }
   }
 
-  // Obtener rango de páginas para mostrar
   get paginasVisibles(): number[] {
     const paginas: number[] = [];
     const maxPaginas = 5;
