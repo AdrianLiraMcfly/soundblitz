@@ -66,28 +66,19 @@ export class ApiServices {
     return this.http.get(`${this.apiUrl}/canciones`, { headers: this.getAuthHeaders() });
   }
 
-  // ✅ NUEVO: Crear canción con FormData
-crearCancionFormData(formData: FormData): Observable<any> {
-  console.log('🚀 API Service - Enviando FormData con campo "datos"');
-  return this.http.post(`${this.apiUrl}/canciones`, formData, { 
-    headers: this.getAuthHeaders() 
-  });
-}
-
-// ✅ NUEVO: Actualizar canción con FormData
-actualizarCancionFormData(id: string, formData: FormData): Observable<any> {
-  console.log('🚀 API Service - Actualizando con FormData, ID:', id);
-  return this.http.put(`${this.apiUrl}/canciones/${id}`, formData, { 
-    headers: this.getAuthHeaders() 
-  });
-}
-
   // POST /api/canciones - Crear canción
-  crearCancion(songData: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/canciones`, songData, { 
+  crearCancion(data: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/canciones`, data, { 
       headers: this.getAuthHeaders() 
     });
   }
+
+crearCancionFormData(formData: FormData): Observable<any> {
+
+  return this.http.post(`${this.apiUrl}/canciones`, formData, { 
+    headers: this.getAuthHeaders()
+  });
+}
 
   // PUT /api/canciones/:id - Actualizar canción
   actualizarCancion(id: string, songData: any): Observable<any> {
@@ -110,7 +101,6 @@ actualizarCancionFormData(id: string, formData: FormData): Observable<any> {
   }
 
   buscarCancionDeezer(query: string): Observable<any> {
-    // La URL ahora apunta a la ruta relativa del proxy, no a la de Deezer directamente.
     const apiUrl = `/api/search?q=${encodeURIComponent(query)}`;
     return this.http.get(apiUrl);
   }

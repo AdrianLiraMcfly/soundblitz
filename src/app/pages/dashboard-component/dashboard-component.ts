@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiServices } from '../shared/services/api-services';
+import { PlayerService } from '../shared/services/playing-service';
 import { NavbarComponent } from '../shared/components/navbar-component/navbar-component';
 
 @Component({
@@ -16,11 +17,13 @@ export class DashboardComponent implements OnInit {
 
   // User properties
   currentUser: any = null;
-  isAdmin: boolean = false;
-  adminNotificationsCount: number = 0;
 
-  // Search
-  searchQuery: string = '';
+  // Data from DB
+  artistas: any[] = [];
+  albumes: any[] = [];
+  canciones: any[] = [];
+  cancionesFavoritas: any[] = [];
+  loading: boolean = true;
 
   // QR Scanner
   showQRScanner: boolean = false;
@@ -28,286 +31,181 @@ export class DashboardComponent implements OnInit {
   showQRSuccess: boolean = false;
   scannedSong: any = null;
 
-  // Music player
-  currentSong: any = null;
-
   constructor(
     private router: Router,
-    private apiServices: ApiServices
+    private apiServices: ApiServices,
+    private playerService: PlayerService
   ) {}
 
   ngOnInit(): void {
     console.log('🚀 Dashboard inicializado');
     this.loadUserData();
-    this.checkAdminNotifications();
+    this.loadAllData();
   }
 
-  // ===== USER MANAGEMENT =====
+  // Cargar datos del usuario
   private loadUserData(): void {
-    const userStr = localStorage.getItem('user');
-    console.log('🔍 Cargando datos del usuario desde localStorage:', userStr);
+    const userDataStr = localStorage.getItem('user_data');
+    console.log('🔍 Cargando datos del usuario desde localStorage:', userDataStr);
     
-    if (userStr) {
-      this.currentUser = JSON.parse(userStr);
-      const role_id = this.currentUser.rol_id; // Fixed: use rol_id instead of role_id
-      this.isAdmin = role_id === 1; // Set admin status based on role
-      console.log('🔍 Cargando datos del usuario, role_id:', role_id);
-      console.log('🔍 Es administrador:', this.isAdmin);
+    if (userDataStr) {
+      try {
+        this.currentUser = JSON.parse(userDataStr);
+        console.log('✅ Usuario cargado:', this.currentUser);
+      } catch (error) {
+        console.error('❌ Error al parsear datos del usuario:', error);
+      }
     }
   }
 
-  private checkAdminNotifications(): void {
-    if (this.isAdmin) {
-      // Simular notificaciones de admin - en producción obtener de la API
-      this.adminNotificationsCount = 5;
+  // Cargar todos los datos de la BD
+  private loadAllData(): void {
+    this.loading = true;
+
+    Promise.all([
+      this.loadArtistas(),
+      this.loadAlbumes(),
+      this.loadCanciones()
+    ]).then(() => {
+      this.loading = false;
+      this.enrichData();
+      console.log('✅ Todos los datos cargados');
+    }).catch(error => {
+      console.error('❌ Error al cargar datos:', error);
+      this.loading = false;
+    });
+  }
+
+  private loadArtistas(): Promise<void> {
+    return new Promise((resolve) => {
+      this.apiServices.getArtistas().subscribe({
+        next: (response) => {
+          this.artistas = response.data || response || [];
+          console.log(`📊 ${this.artistas.length} artistas cargados`);
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error al cargar artistas:', error);
+          resolve();
+        }
+      });
+    });
+  }
+
+  private loadAlbumes(): Promise<void> {
+    return new Promise((resolve) => {
+      this.apiServices.getAlbumes().subscribe({
+        next: (response) => {
+          this.albumes = response.data || response || [];
+          console.log(`📀 ${this.albumes.length} álbumes cargados`);
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error al cargar álbumes:', error);
+          resolve();
+        }
+      });
+    });
+  }
+
+  private loadCanciones(): Promise<void> {
+    return new Promise((resolve) => {
+      this.apiServices.getCanciones().subscribe({
+        next: (response) => {
+          this.canciones = response.data || response || [];
+          console.log(`🎵 ${this.canciones.length} canciones cargadas`);
+          resolve();
+        },
+        error: (error) => {
+          console.error('Error al cargar canciones:', error);
+          resolve();
+        }
+      });
+    });
+  }
+
+  // Enriquecer datos con nombres de artistas
+  private enrichData(): void {
+    // Enriquecer álbumes con nombre de artista
+    this.albumes.forEach(album => {
+      const artista = this.artistas.find(a => a.id == album.artista_id);
+      album.artistaNombre = artista?.nombre || 'Desconocido';
+    });
+
+    // Enriquecer canciones con nombre de artista y álbum
+    this.canciones.forEach(cancion => {
+      const artista = this.artistas.find(a => a.id == cancion.artista_id);
+      const album = this.albumes.find(a => a.id == cancion.album_id);
+      cancion.artistaNombre = artista?.nombre || 'Desconocido';
+      cancion.albumNombre = album?.nombre || '';
+    });
+  }
+
+  // Navegación
+  navigateToArtista(id: any): void {
+    this.router.navigate(['/artista', id]);
+  }
+
+  navigateToAlbum(id: any): void {
+    this.router.navigate(['/album', id]);
+  }
+
+  // Reproducción
+  reproducirCancion(cancion: any): void {
+    this.playerService.playSong({
+      id: cancion.id,
+      nombre: cancion.nombre,
+      artista_id: cancion.artista_id,
+      artistaNombre: cancion.artistaNombre,
+      album_id: cancion.album_id,
+      albumNombre: cancion.albumNombre,
+      url_cancion: cancion.url_cancion,
+      url_portada: cancion.url_portada,
+      duracion: cancion.duracion
+    });
+  }
+
+  // Favoritos
+  agregarAFavoritos(cancion: any): void {
+    const index = this.cancionesFavoritas.findIndex(c => c.id === cancion.id);
+    if (index === -1) {
+      this.cancionesFavoritas.push(cancion);
+      console.log('❤️ Canción agregada a favoritos:', cancion.nombre);
+    } else {
+      this.cancionesFavoritas.splice(index, 1);
+      console.log('💔 Canción removida de favoritos:', cancion.nombre);
     }
+    // Aquí podrías guardar en localStorage o BD
+    localStorage.setItem('favoritos', JSON.stringify(this.cancionesFavoritas));
   }
 
-  // ===== NAVIGATION METHODS FOR ADMIN =====
-  
-  // Canciones
-  navigateToSongs(): void {
-    console.log('🎵 Navegando a gestión de canciones');
-    // Implementar navegación o modal
-    alert('Funcionalidad: Ver todas las canciones - Por implementar');
+  esFavorito(cancionId: any): boolean {
+    return this.cancionesFavoritas.some(c => c.id === cancionId);
   }
 
-  openAddSongModal(): void {
-    this.router.navigate(['/crear-canciones']);
-  }
-
-  manageSongCategories(): void {
-    console.log('🏷️ Gestionando géneros de canciones');
-    alert('Funcionalidad: Gestionar géneros musicales - Por implementar');
-  }
-
-  // Álbumes
-  navigateToAlbums(): void {
-    console.log('💿 Navegando a gestión de álbumes');
-    alert('Funcionalidad: Ver todos los álbumes - Por implementar');
-  }
-
-  openAddAlbumModal(): void {
-    console.log('➕ Abriendo modal para crear álbum');
-    alert('Funcionalidad: Crear nuevo álbum - Por implementar');
-  }
-
-  manageAlbumGenres(): void {
-    console.log('📊 Mostrando estadísticas de álbumes');
-    alert('Funcionalidad: Estadísticas de álbumes - Por implementar');
-  }
-
-  // Artistas
-  navigateToArtists(): void {
-    this.router.navigate(['/crear-artistas']);
-  }
-
-  openAddArtistModal(): void {
-    console.log('➕ Abriendo modal para agregar artista');
-    alert('Funcionalidad: Agregar nuevo artista - Por implementar');
-  }
-
-  manageArtistVerification(): void {
-    console.log('✅ Gestionando verificaciones de artistas');
-    alert('Funcionalidad: Sistema de verificación de artistas - Por implementar');
-  }
-
-  // Admin general
-  navigateToUsers(): void {
-    console.log('👥 Navegando a gestión de usuarios');
-    alert('Funcionalidad: Gestión de usuarios - Por implementar');
-  }
-
-  openAnalytics(): void {
-    console.log('📈 Abriendo analíticas y reportes');
-    alert('Funcionalidad: Dashboard de analíticas - Por implementar');
-  }
-
-  openSystemSettings(): void {
-    console.log('⚙️ Abriendo configuración del sistema');
-    alert('Funcionalidad: Configuración del sistema - Por implementar');
-  }
-
-  // ===== SEARCH =====
-  onSearchChange(): void {
-    console.log('🔍 Buscando:', this.searchQuery);
-    
-    if (this.searchQuery.length > 2) {
-      // Simular búsqueda
-      console.log('Ejecutando búsqueda para:', this.searchQuery);
-      
-      // En producción, hacer llamada a la API:
-      // this.apiServices.buscarContenido(this.searchQuery).subscribe({
-      //   next: (results) => {
-      //     console.log('Resultados:', results);
-      //   },
-      //   error: (error) => {
-      //     console.error('Error en búsqueda:', error);
-      //   }
-      // });
-    }
-  }
-
-  // ===== QR SCANNER =====
+  // QR Scanner
   openQRScanner(): void {
-    console.log('📷 Abriendo scanner QR');
     this.showQRScanner = true;
-    this.startQRScanner();
+    // Implementar lógica del scanner
   }
 
   closeQRScanner(): void {
-    console.log('❌ Cerrando scanner QR');
     this.showQRScanner = false;
     this.qrScanning = false;
-    this.stopQRScanner();
-  }
-
-  private startQRScanner(): void {
-    setTimeout(() => {
-      if (this.qrVideo?.nativeElement) {
-        navigator.mediaDevices.getUserMedia({ 
-          video: { 
-            facingMode: 'environment', // Cámara trasera
-            width: { ideal: 640 },
-            height: { ideal: 640 }
-          } 
-        })
-        .then(stream => {
-          if (this.qrVideo?.nativeElement) {
-            this.qrVideo.nativeElement.srcObject = stream;
-            this.qrScanning = true;
-            console.log('📹 Cámara iniciada para QR');
-            
-            // Simular detección de QR después de 3 segundos (para testing)
-            setTimeout(() => {
-              if (this.qrScanning) {
-                this.simulateQRDetection('TEST_QR_CODE_123');
-              }
-            }, 3000);
-          }
-        })
-        .catch(error => {
-          console.error('❌ Error al acceder a la cámara:', error);
-          alert('No se pudo acceder a la cámara. Verifica los permisos.');
-        });
-      }
-    }, 100);
-  }
-
-  private stopQRScanner(): void {
-    if (this.qrVideo?.nativeElement?.srcObject) {
-      const stream = this.qrVideo.nativeElement.srcObject as MediaStream;
-      stream.getTracks().forEach(track => {
-        track.stop();
-        console.log('🛑 Cámara detenida');
-      });
-      this.qrVideo.nativeElement.srcObject = null;
-    }
   }
 
   switchCamera(): void {
-    console.log('🔄 Cambiando cámara (funcionalidad por implementar)');
-    alert('Cambio de cámara - Por implementar');
+    console.log('🔄 Cambiando cámara...');
+    // Implementar cambio de cámara
   }
 
-  // Simular detección de QR (reemplazar con librería real)
-  private simulateQRDetection(qrCode: string): void {
-    console.log('🎯 QR detectado:', qrCode);
-    
-    // Simular canción encontrada
-    const mockSong = {
-      id: '123',
-      title: 'Canción de Prueba',
-      artist: 'Artista de Prueba',
-      album: 'Álbum de Prueba'
-    };
-
-    this.scannedSong = mockSong;
-    this.showQRSuccess = true;
-    this.closeQRScanner();
-    
-    // Ocultar toast después de 3 segundos
-    setTimeout(() => {
-      this.showQRSuccess = false;
-    }, 3000);
-    
-    // Reproducir canción
-    this.playSong(mockSong);
-
-    // En producción usar:
-    // this.apiServices.buscarCancionPorQR(qrCode).subscribe({
-    //   next: (song) => {
-    //     this.scannedSong = song;
-    //     this.showQRSuccess = true;
-    //     this.closeQRScanner();
-    //     this.playSong(song);
-    //   },
-    //   error: (error) => {
-    //     console.error('Error al buscar canción por QR:', error);
-    //     alert('No se encontró ninguna canción con este código QR');
-    //   }
-    // });
-  }
-
-  // ===== MUSIC PLAYER =====
-  private playSong(song: any): void {
-    this.currentSong = song;
-    console.log('🎵 Reproduciendo:', song.title, 'de', song.artist);
-    
-    // En producción registrar reproducción:
-    // if (song.id) {
-    //   this.apiServices.registrarReproduccion(song.id).subscribe({
-    //     next: () => console.log('Reproducción registrada'),
-    //     error: (error) => console.error('Error al registrar reproducción:', error)
-    //   });
-    // }
-  }
-
-  // ===== USER MENU =====
-  openProfile(): void {
-    console.log('👤 Abriendo perfil de usuario');
-    alert('Funcionalidad: Perfil de usuario - Por implementar');
-    // this.router.navigate(['/profile']);
-  }
-
-  openSettings(): void {
-    console.log('⚙️ Abriendo configuración');
-    alert('Funcionalidad: Configuración de usuario - Por implementar');
-    // this.router.navigate(['/settings']);
-  }
-
-  logout(): void {
-    console.log('👋 Cerrando sesión...');
-    
-    // Confirmar cierre de sesión
-    if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
-      // Limpiar datos locales
-      this.apiServices.clearAuthData();
-      
-      // Navegar al login
-      this.router.navigate(['/login']).then(() => {
-        console.log('✅ Sesión cerrada correctamente');
-      });
-
-      // En producción también notificar al servidor:
-      // this.apiServices.logout().subscribe({
-      //   next: () => {
-      //     this.apiServices.clearAuthData();
-      //     this.router.navigate(['/login']);
-      //   },
-      //   error: (error) => {
-      //     console.error('Error al cerrar sesión:', error);
-      //     // Cerrar sesión localmente aunque falle en el servidor
-      //     this.apiServices.clearAuthData();
-      //     this.router.navigate(['/login']);
-      //   }
-      // });
+  // Utilidades
+  getInitials(nombre: string): string {
+    if (!nombre) return '?';
+    const palabras = nombre.trim().split(' ');
+    if (palabras.length === 1) {
+      return palabras[0].substring(0, 2).toUpperCase();
     }
-  }
-
-  // ===== LIFECYCLE HOOKS =====
-  ngOnDestroy(): void {
-    // Limpiar recursos al destruir el componente
-    this.stopQRScanner();
+    return (palabras[0][0] + palabras[palabras.length - 1][0]).toUpperCase();
   }
 }

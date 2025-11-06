@@ -53,6 +53,12 @@ export class CrearCancionesComponent implements OnInit {
     activo: 1
   };
   
+  // ✅ NUEVO: Variables para el archivo MP3
+  archivoMP3: File | null = null;
+  archivoMP3Nombre: string = '';
+  subiendoArchivo: boolean = false;
+  progresoCarga: number = 0;
+  
   searchTerm: string = '';
   sortOrder: string = 'nombre-asc';
   
@@ -70,12 +76,11 @@ export class CrearCancionesComponent implements OnInit {
   totalPages: number = 1;
   
   loading: boolean = false;
-  loadingInitial: boolean = true; // ✅ AGREGADO
+  loadingInitial: boolean = true;
   error: string = '';
   successMessage: string = '';
   mostrarFormulario: boolean = false;
 
-  // ✅ AGREGADO: Referencia a Math para el template
   Math = Math;
 
   constructor(private apiServices: ApiServices) {}
@@ -92,7 +97,6 @@ export class CrearCancionesComponent implements OnInit {
     });
   }
 
-  // ✅ AGREGADO: Versión Promise de cargar artistas
   private cargarArtistasPromise(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.apiServices.getArtistas().subscribe({
@@ -108,7 +112,6 @@ export class CrearCancionesComponent implements OnInit {
     });
   }
 
-  // ✅ AGREGADO: Versión Promise de cargar álbumes
   private cargarAlbumesPromise(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.apiServices.getAlbumes().subscribe({
@@ -165,48 +168,65 @@ export class CrearCancionesComponent implements OnInit {
     }
   }
 
-  cargarCanciones(): void {
-    this.loading = true;
-    this.error = '';
-    
-    this.apiServices.getCanciones().subscribe({
-      next: (response) => {
-        const cancionesData = response.data || response;
-        
-        // ✅ Validar si hay datos
-        if (!cancionesData || !Array.isArray(cancionesData)) {
-          this.cancionesOriginales = [];
-          this.canciones = [];
-          this.totalCanciones = 0;
-          this.loading = false;
-          this.loadingInitial = false;
-          return;
-        }
-        
-        cancionesData.forEach((cancion: Cancion) => {
-          const artista = this.artistas.find(a => a.id === cancion.artista_id);
-          const album = this.albumes.find(a => a.id === cancion.album_id);
-          cancion.artistaNombre = artista ? artista.nombre : 'Desconocido';
-          cancion.albumNombre = album ? album.nombre : 'Sin álbum';
-        });
-        
-        this.cancionesOriginales = [...cancionesData];
-        this.totalCanciones = this.cancionesOriginales.length;
-        this.calcularEstadisticas();
-        this.aplicarFiltrosYOrdenamiento();
-        this.loading = false;
-        this.loadingInitial = false; // ✅ AGREGADO
-      },
-      error: (error) => {
-        console.error('Error al cargar canciones:', error);
-        this.error = 'Error al cargar las canciones. Por favor, intenta de nuevo.';
-        this.loading = false;
-        this.loadingInitial = false; // ✅ AGREGADO
-        this.cancionesOriginales = [];
-        this.canciones = [];
-        this.totalCanciones = 0;
+  // ✅ NUEVO: Manejar selección de archivo MP3
+  onArchivoSeleccionado(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      const file = input.files[0];
+      
+      // Validar que sea MP3
+      if (!file.type.includes('audio/mpeg') && !file.name.endsWith('.mp3')) {
+        this.error = 'Por favor selecciona un archivo MP3 válido';
+        setTimeout(() => this.error = '', 3000);
+        return;
       }
+
+      // Validar tamaño (máximo 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        this.error = 'El archivo es muy grande. Máximo 10MB';
+        setTimeout(() => this.error = '', 3000);
+        return;
+      }
+
+      this.archivoMP3 = file;
+      this.archivoMP3Nombre = file.name;
+      
+      // ✅ Obtener duración del audio
+      this.obtenerDuracionAudio(file);
+      
+      console.log('✅ Archivo MP3 seleccionado:', file.name, 'Tamaño:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
+    }
+  }
+
+  // ✅ NUEVO: Obtener duración del archivo de audio
+  private obtenerDuracionAudio(file: File): void {
+    const audio = new Audio();
+    const url = URL.createObjectURL(file);
+    
+    audio.addEventListener('loadedmetadata', () => {
+      const duracion = Math.floor(audio.duration);
+      const minutos = Math.floor(duracion / 60);
+      const segundos = duracion % 60;
+      this.nuevaCancion.duracion = `${minutos}:${segundos.toString().padStart(2, '0')}`;
+      console.log('⏱️ Duración detectada:', this.nuevaCancion.duracion);
+      URL.revokeObjectURL(url);
     });
+    
+    audio.src = url;
+  }
+
+  // ✅ NUEVO: Eliminar archivo seleccionado
+  eliminarArchivoMP3(): void {
+    this.archivoMP3 = null;
+    this.archivoMP3Nombre = '';
+    this.nuevaCancion.duracion = undefined;
+    
+    // Limpiar el input file
+    const fileInput = document.getElementById('archivoMP3') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
   }
 
   buscarEnDeezer(): void {
@@ -242,15 +262,17 @@ export class CrearCancionesComponent implements OnInit {
     });
   }
 
+  // ✅ MODIFICADO: Solo importar nombre y portada de Deezer
   seleccionarCancionDeezer(track: any): void {
-    this.nuevaCancion.url_cancion = track.preview || track.link || '';
+    // Solo llenar nombre y portada
+    this.nuevaCancion.nombre = track.title || '';
     this.nuevaCancion.url_portada = track.album.cover_medium || track.album.cover_big || track.album.cover_xl || '';
     
     this.busquedaDeezer = '';
     this.resultadosDeezer = [];
     this.mostrarResultadosDeezer = false;
     
-    this.successMessage = 'URLs importadas desde Deezer. Completa los demás campos.';
+    this.successMessage = 'Nombre y portada importados desde Deezer. Ahora sube el archivo MP3.';
     setTimeout(() => {
       this.successMessage = '';
     }, 3000);
@@ -264,92 +286,143 @@ export class CrearCancionesComponent implements OnInit {
 
 agregarCancion(event: Event): void {
   event.preventDefault();
-  
-  // Validaciones
-  if (!this.nuevaCancion.nombre.trim()) {
-    this.error = 'El nombre de la canción no puede estar vacío';
+
+  // Validar archivo MP3
+  if (!this.archivoMP3) {
+    this.error = 'Por favor selecciona un archivo MP3';
     setTimeout(() => this.error = '', 3000);
     return;
   }
 
-  if (!this.nuevaCancion.artista_id) {
-    this.error = 'Debes seleccionar un artista';
-    setTimeout(() => this.error = '', 3000);
-    return;
-  }
-
-  if (!this.nuevaCancion.url_cancion.trim()) {
-    this.error = 'La URL de la canción no puede estar vacía';
+  // Validaciones básicas
+  if (!this.nuevaCancion.nombre.trim() || !this.nuevaCancion.artista_id) {
+    this.error = 'Completa los campos obligatorios: nombre y artista';
     setTimeout(() => this.error = '', 3000);
     return;
   }
 
   this.loading = true;
+  this.subiendoArchivo = true;
+  this.progresoCarga = 0;
   this.error = '';
   this.successMessage = '';
 
-  // ✅ Convertir IDs a números
-  const artistaId = typeof this.nuevaCancion.artista_id === 'string' 
-    ? parseInt(this.nuevaCancion.artista_id, 10) 
-    : this.nuevaCancion.artista_id;
-    
-  const albumId = this.nuevaCancion.album_id && this.nuevaCancion.album_id !== '' 
-    ? (typeof this.nuevaCancion.album_id === 'string' 
-        ? parseInt(this.nuevaCancion.album_id, 10) 
-        : this.nuevaCancion.album_id)
-    : null;
-
-  // ✅ Construir objeto de datos
-  const cancionData: any = {
+  // ✅ Crear objeto de datos EXACTAMENTE como lo espera el backend
+  const cancionData = {
     nombre: this.nuevaCancion.nombre.trim(),
-    artista_id: artistaId,
-    url_cancion: this.nuevaCancion.url_cancion.trim(),
-    activo: this.nuevaCancion.activo !== undefined ? this.nuevaCancion.activo : 1
+    artista_id: this.nuevaCancion.artista_id,
+    album_id: this.nuevaCancion.album_id || null,
+    url_cancion: '', // Se llenará en el backend
+    url_portada: '', // Se llenará en el backend si hay imagen
+    activo: this.nuevaCancion.activo ?? 1
   };
 
-  if (albumId !== null && !isNaN(albumId)) {
-    cancionData.album_id = albumId;
-  }
-
-  if (this.nuevaCancion.url_portada && this.nuevaCancion.url_portada.trim() !== '') {
-    cancionData.url_portada = this.nuevaCancion.url_portada.trim();
-  }
-
-  // ✅ CAMBIO: Crear FormData y enviar los datos en el campo 'datos'
+  // ✅ Crear FormData con los nombres EXACTOS que espera el backend
   const formData = new FormData();
+  
+  // 1. datos (JSON stringificado)
   formData.append('datos', JSON.stringify(cancionData));
+  
+  // 2. cancion (archivo MP3)
+  formData.append('cancion', this.archivoMP3, this.archivoMP3.name);
+  
+  // 3. imagen (si hay URL de portada, podrías descargarla y subirla, pero por ahora solo URL)
+  // Si quieres subir una imagen desde archivo, necesitarías un input adicional
+  // Por ahora, si hay URL de Deezer, la guardamos en datos
 
-  console.log('📤 Enviando canción al servidor:', cancionData);
-  console.log('📦 FormData con campo "datos":', JSON.stringify(cancionData));
+  console.log('📤 Enviando canción con archivo MP3');
+  console.log('📋 Datos:', cancionData);
+  console.log('🎵 Archivo MP3:', this.archivoMP3.name, `(${(this.archivoMP3.size / 1024 / 1024).toFixed(2)} MB)`);
+
+  // Simular progreso
+  const interval = setInterval(() => {
+    if (this.progresoCarga < 90) {
+      this.progresoCarga += 10;
+    }
+  }, 200);
 
   this.apiServices.crearCancionFormData(formData).subscribe({
     next: (response) => {
+      clearInterval(interval);
+      this.progresoCarga = 100;
+      
       console.log('✅ Canción creada exitosamente:', response);
       this.successMessage = `Canción "${this.nuevaCancion.nombre}" agregada exitosamente`;
-      this.resetFormulario();
-      this.cargarCanciones();
-      this.mostrarFormulario = false;
-      
+
       setTimeout(() => {
-        this.successMessage = '';
-      }, 3000);
+        this.resetFormulario();
+        this.cargarCanciones();
+        this.mostrarFormulario = false;
+        this.subiendoArchivo = false;
+        this.progresoCarga = 0;
+      }, 1500);
+
+      this.loading = false;
+      setTimeout(() => (this.successMessage = ''), 3000);
     },
     error: (error) => {
+      clearInterval(interval);
       console.error('❌ Error al agregar canción:', error);
-      
+
       if (error.status === 500) {
-        this.error = 'Error del servidor al crear la canción. Verifica los logs del backend.';
+        this.error = error.error?.message || 'Error del servidor. Verifica los logs del backend.';
       } else if (error.status === 400) {
         this.error = error.error?.message || 'Datos inválidos. Verifica los campos.';
+      } else if (error.status === 413) {
+        this.error = 'El archivo es muy grande. Reduce el tamaño del MP3.';
       } else {
         this.error = error.error?.message || 'Error al agregar la canción.';
       }
-      
+
       this.loading = false;
-      setTimeout(() => this.error = '', 8000);
-    }
+      this.subiendoArchivo = false;
+      this.progresoCarga = 0;
+      setTimeout(() => (this.error = ''), 8000);
+    },
   });
 }
+  cargarCanciones(): void {
+    this.loading = true;
+    this.error = '';
+    
+    this.apiServices.getCanciones().subscribe({
+      next: (response) => {
+        const cancionesData = response.data || response;
+        
+        if (!cancionesData || !Array.isArray(cancionesData)) {
+          this.cancionesOriginales = [];
+          this.canciones = [];
+          this.totalCanciones = 0;
+          this.loading = false;
+          this.loadingInitial = false;
+          return;
+        }
+        
+        cancionesData.forEach((cancion: Cancion) => {
+          const artista = this.artistas.find(a => a.id === cancion.artista_id);
+          const album = this.albumes.find(a => a.id === cancion.album_id);
+          cancion.artistaNombre = artista ? artista.nombre : 'Desconocido';
+          cancion.albumNombre = album ? album.nombre : 'Sin álbum';
+        });
+        
+        this.cancionesOriginales = [...cancionesData];
+        this.totalCanciones = this.cancionesOriginales.length;
+        this.calcularEstadisticas();
+        this.aplicarFiltrosYOrdenamiento();
+        this.loading = false;
+        this.loadingInitial = false;
+      },
+      error: (error) => {
+        console.error('Error al cargar canciones:', error);
+        this.error = 'Error al cargar las canciones. Por favor, intenta de nuevo.';
+        this.loading = false;
+        this.loadingInitial = false;
+        this.cancionesOriginales = [];
+        this.canciones = [];
+        this.totalCanciones = 0;
+      }
+    });
+  }
 
   editarCancion(cancion: Cancion): void {
     this.nuevaCancion = { ...cancion };
@@ -409,7 +482,7 @@ agregarCancion(event: Event): void {
       this.apiServices.actualizarCancion(cancion.id, cancionData).subscribe({
         next: (response) => {
           this.successMessage = `Canción "${cancion.nombre}" ${nuevoEstado === 1 ? 'activada' : 'desactivada'} exitosamente`;
-          cancion.activo = nuevoEstado; // ✅ Actualizar localmente
+          cancion.activo = nuevoEstado;
           
           setTimeout(() => {
             this.successMessage = '';
@@ -458,6 +531,7 @@ agregarCancion(event: Event): void {
     };
     this.albumesFiltrados = [];
     this.cerrarResultadosDeezer();
+    this.eliminarArchivoMP3(); // ✅ Limpiar archivo
   }
 
   cancelarEdicion(): void {
@@ -560,7 +634,6 @@ agregarCancion(event: Event): void {
     return this.canciones.slice(startIndex, endIndex);
   }
 
-  // ✅ AGREGADO: Helpers para el template
   get hayDatos(): boolean {
     return this.cancionesOriginales.length > 0;
   }

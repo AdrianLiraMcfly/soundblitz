@@ -40,18 +40,87 @@
         <p class="text-red-400">{{ error }}</p>
       </div>
 
-      <!-- Formulario para agregar/editar canción -->
+<!-- Formulario para agregar/editar canción -->
       <div *ngIf="mostrarFormulario" class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6 mb-8 animate-slide-down">
         <h3 class="text-xl font-bold text-white mb-6">
           {{ nuevaCancion.id ? 'Editar Canción' : 'Nueva Canción' }}
         </h3>
         
-        <form (submit)="nuevaCancion.id ? actualizarCancion() : agregarCancion($event)" class="space-y-4">
+        <form (submit)="nuevaCancion.id ? actualizarCancion() : agregarCancion($event)" class="space-y-6">
+          
+          <!-- ✅ PASO 1: Búsqueda en Deezer (Opcional) -->
+          <div class="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
+            <div class="flex items-center space-x-2 mb-3">
+              <svg class="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
+              <h4 class="text-purple-300 font-semibold">Paso 1 (Opcional): Buscar en Deezer</h4>
+            </div>
+            <p class="text-gray-400 text-sm mb-3">Importa el nombre y la portada de la canción automáticamente</p>
+            
+            <div class="relative">
+              <input 
+                type="text" 
+                [(ngModel)]="busquedaDeezer"
+                (keyup.enter)="buscarEnDeezer()"
+                name="busquedaDeezer"
+                placeholder="Buscar: nombre de la canción + artista"
+                class="w-full px-4 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <button 
+                type="button"
+                (click)="buscarEnDeezer()"
+                [disabled]="buscandoDeezer"
+                class="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-purple-400 hover:text-purple-300 disabled:opacity-50">
+                <svg *ngIf="!buscandoDeezer" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <svg *ngIf="buscandoDeezer" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </button>
+
+              <!-- Resultados de Deezer -->
+              <div *ngIf="mostrarResultadosDeezer && resultadosDeezer.length > 0" 
+                   class="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl max-h-64 overflow-y-auto z-50">
+                <div class="p-2 border-b border-gray-700 flex items-center justify-between">
+                  <span class="text-xs text-gray-400">{{ resultadosDeezer.length }} resultados</span>
+                  <button 
+                    type="button"
+                    (click)="cerrarResultadosDeezer()"
+                    class="text-gray-400 hover:text-white">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+                <div class="py-1">
+                  <button 
+                    type="button"
+                    *ngFor="let track of resultadosDeezer" 
+                    (click)="seleccionarCancionDeezer(track)"
+                    class="w-full px-3 py-2 hover:bg-gray-700 transition duration-200 flex items-center space-x-3 text-left">
+                    <img [src]="track.album.cover_small" [alt]="track.title" class="w-10 h-10 rounded">
+                    <div class="flex-1 min-w-0">
+                      <p class="text-white text-sm font-medium truncate">{{ track.title }}</p>
+                      <p class="text-gray-400 text-xs truncate">{{ track.artist.name }}</p>
+                    </div>
+                    <svg class="w-5 h-5 text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ✅ PASO 2: Datos básicos -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Nombre de la canción -->
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-2">
-                Nombre de la canción *
+                Nombre de la canción * <span class="text-xs text-gray-500">(o importar desde Deezer)</span>
               </label>
               <input 
                 type="text" 
@@ -101,92 +170,12 @@
               </p>
             </div>
 
-            <!-- Búsqueda Deezer integrada -->
+            <!-- URL de portada -->
             <div>
               <label class="block text-sm font-medium text-gray-300 mb-2">
-                Buscar en Deezer (opcional)
+                URL de la portada <span class="text-xs text-gray-500">(o importar desde Deezer)</span>
               </label>
-              <div class="relative">
-                <input 
-                  type="text" 
-                  [(ngModel)]="busquedaDeezer"
-                  (keyup.enter)="buscarEnDeezer()"
-                  name="busquedaDeezer"
-                  placeholder="Buscar canción en Deezer..."
-                  class="w-full px-4 py-2 pr-10 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-                <button 
-                  type="button"
-                  (click)="buscarEnDeezer()"
-                  [disabled]="buscandoDeezer"
-                  class="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-purple-400 hover:text-purple-300 disabled:opacity-50">
-                  <svg *ngIf="!buscandoDeezer" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                  </svg>
-                  <svg *ngIf="buscandoDeezer" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                </button>
-
-                <!-- Resultados de Deezer (Dropdown) -->
-                <div *ngIf="mostrarResultadosDeezer && resultadosDeezer.length > 0" 
-                     class="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl max-h-64 overflow-y-auto z-50">
-                  <div class="p-2 border-b border-gray-700 flex items-center justify-between">
-                    <span class="text-xs text-gray-400">{{ resultadosDeezer.length }} resultados</span>
-                    <button 
-                      type="button"
-                      (click)="cerrarResultadosDeezer()"
-                      class="text-gray-400 hover:text-white">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                      </svg>
-                    </button>
-                  </div>
-                  <div class="py-1">
-                    <button 
-                      type="button"
-                      *ngFor="let track of resultadosDeezer" 
-                      (click)="seleccionarCancionDeezer(track)"
-                      class="w-full px-3 py-2 hover:bg-gray-700 transition duration-200 flex items-center space-x-3 text-left">
-                      <img [src]="track.album.cover_small" [alt]="track.title" class="w-10 h-10 rounded">
-                      <div class="flex-1 min-w-0">
-                        <p class="text-white text-sm font-medium truncate">{{ track.title }}</p>
-                        <p class="text-gray-400 text-xs truncate">{{ track.artist.name }}</p>
-                      </div>
-                      <svg class="w-5 h-5 text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <p class="text-xs text-gray-400 mt-1">
-                Busca y selecciona para autocompletar URLs
-              </p>
-            </div>
-
-            <!-- URL de la canción -->
-            <div>
-              <label class="block text-sm font-medium text-gray-300 mb-2">
-                URL de la canción *
-              </label>
-              <input 
-                type="url" 
-                [(ngModel)]="nuevaCancion.url_cancion"
-                name="url_cancion"
-                placeholder="https://ejemplo.com/cancion.mp3"
-                class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
-                required
-              />
-            </div>
-
-            <!-- URL de la portada -->
-            <div class="md:col-span-2">
-              <label class="block text-sm font-medium text-gray-300 mb-2">
-                URL de la portada (opcional)
-              </label>
-              <div class="flex space-x-3">
+              <div class="flex space-x-2">
                 <input 
                   type="url" 
                   [(ngModel)]="nuevaCancion.url_portada"
@@ -194,10 +183,71 @@
                   placeholder="https://ejemplo.com/portada.jpg"
                   class="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
-                <!-- Preview de portada -->
-                <div *ngIf="nuevaCancion.url_portada" class="w-12 h-12 rounded-lg overflow-hidden border-2 border-gray-600">
+                <div *ngIf="nuevaCancion.url_portada" class="w-12 h-12 rounded-lg overflow-hidden border-2 border-gray-600 flex-shrink-0">
                   <img [src]="nuevaCancion.url_portada" alt="Preview" class="w-full h-full object-cover">
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ✅ PASO 3: Subir archivo MP3 -->
+          <div class="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+            <div class="flex items-center space-x-2 mb-3">
+              <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+              </svg>
+              <h4 class="text-green-300 font-semibold">Paso 2 (Requerido): Subir archivo MP3</h4>
+            </div>
+            <p class="text-gray-400 text-sm mb-3">Sube el archivo de audio en formato MP3 (máximo 10MB)</p>
+            
+            <div *ngIf="!archivoMP3" class="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center hover:border-green-500 transition cursor-pointer"
+                 (click)="fileInput.click()">
+              <input 
+                #fileInput
+                type="file" 
+                id="archivoMP3"
+                (change)="onArchivoSeleccionado($event)"
+                accept="audio/mpeg,audio/mp3,.mp3"
+                class="hidden"
+              />
+              <svg class="w-12 h-12 text-gray-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+              </svg>
+              <p class="text-white font-medium mb-1">Click para seleccionar archivo MP3</p>
+              <p class="text-gray-400 text-sm">o arrastra y suelta aquí</p>
+            </div>
+
+            <!-- Archivo seleccionado -->
+            <div *ngIf="archivoMP3" class="bg-gray-700 rounded-lg p-4 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                  <svg class="w-6 h-6 text-green-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-white font-medium text-sm">{{ archivoMP3Nombre }}</p>
+                  <p class="text-gray-400 text-xs">{{ (archivoMP3.size / 1024 / 1024).toFixed(2) }}MB<span *ngIf="nuevaCancion.duracion"> • {{ nuevaCancion.duracion }}</span></p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                (click)="eliminarArchivoMP3()"
+                class="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Barra de progreso al subir -->
+            <div *ngIf="subiendoArchivo" class="mt-4">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm text-gray-400">Subiendo archivo...</span>
+                <span class="text-sm text-green-400">{{ progresoCarga }}%</span>
+              </div>
+              <div class="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+                <div class="bg-green-500 h-full rounded-full transition-all duration-300" [style.width.%]="progresoCarga"></div>
               </div>
             </div>
           </div>
@@ -207,15 +257,16 @@
             <button 
               type="button"
               (click)="cancelarEdicion()"
-              class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition duration-200">
+              [disabled]="subiendoArchivo"
+              class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
               Cancelar
             </button>
             <button 
               type="submit"
-              [disabled]="loading"
+              [disabled]="loading || subiendoArchivo || !archivoMP3"
               class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2">
-              <span>{{ nuevaCancion.id ? 'Actualizar' : 'Agregar' }}</span>
-              <svg *ngIf="loading" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+              <span>{{ nuevaCancion.id ? 'Actualizar' : 'Agregar Canción' }}</span>
+              <svg *ngIf="loading || subiendoArchivo" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>

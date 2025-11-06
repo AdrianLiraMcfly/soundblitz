@@ -30,4 +30,13 @@ export const routes: Routes = [
         path: 'crear-artistas',
         loadComponent: () => import('./pages/admin/crear-artistas-component/crear-artistas-component').then(m => m.CrearArtistasComponent)
     },
+    {
+        path: 'artista/:id',
+        loadComponent: () => import('./pages/lista-canciones-component/lista-canciones-component').then(m => m.ListaCancionesComponent)
+    },
+    {
+        path: 'album/:id',
+        loadComponent: () => import('./pages/lista-canciones-component/lista-canciones-component').then(m => m.ListaCancionesComponent)
+    },
+
 ];
