@@ -20,6 +20,14 @@ export class ApiServices {
     });
   }
 
+  private getAuthHeadersWithoutContentType(): HttpHeaders {
+  const token = localStorage.getItem('authToken');
+  return new HttpHeaders({
+    'Authorization': token ? `Bearer ${token}` : ''
+  });
+}
+
+
   // ===== USUARIOS =====
   // GET /api/usuarios - Obtener todos los usuarios
   getUsuarios(): Observable<any> {
@@ -74,9 +82,8 @@ export class ApiServices {
   }
 
 crearCancionFormData(formData: FormData): Observable<any> {
-
   return this.http.post(`${this.apiUrl}/canciones`, formData, { 
-    headers: this.getAuthHeaders()
+    headers: this.getAuthHeadersWithoutContentType()
   });
 }
 

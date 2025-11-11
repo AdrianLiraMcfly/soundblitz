@@ -1,0 +1,468 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+  <!-- Navbar -->
+  <app-navbar></app-navbar>
+
+  <!-- Contenedor principal -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Header -->
+    <div class="mb-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <!-- Título -->
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center">
+            <svg class="w-8 h-8 mr-3 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+            Mis Favoritas
+          </h1>
+          <p class="text-gray-400 text-sm md:text-base">
+            {{ favoritasFiltradas.length }} canción{{ favoritasFiltradas.length !== 1 ? 'es' : '' }} en tu colección
+          </p>
+        </div>
+
+        <!-- Controles de vista -->
+        <div class="flex items-center space-x-3">
+          <!-- Toggle Vista -->
+          <div class="flex bg-gray-800 rounded-lg p-1 border border-gray-700">
+            <button 
+              (click)="cambiarVista('grid')"
+              [class.bg-green-500]="vistaActual === 'grid'"
+              [class.text-white]="vistaActual === 'grid'"
+              [class.text-gray-400]="vistaActual !== 'grid'"
+              class="px-3 py-2 rounded-md transition duration-200">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+              </svg>
+            </button>
+            <button 
+              (click)="cambiarVista('list')"
+              [class.bg-green-500]="vistaActual === 'list'"
+              [class.text-white]="vistaActual === 'list'"
+              [class.text-gray-400]="vistaActual !== 'list'"
+              class="px-3 py-2 rounded-md transition duration-200">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de búsqueda y filtros -->
+    <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 mb-6 border border-gray-700">
+      <div class="flex flex-col md:flex-row gap-4">
+        <!-- Búsqueda -->
+        <div class="flex-1 relative">
+          <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input 
+            type="text" 
+            [(ngModel)]="searchQuery"
+            (input)="onBuscar()"
+            placeholder="Buscar en favoritas..." 
+            class="w-full pl-10 pr-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          />
+        </div>
+
+        <!-- Ordenar -->
+        <div class="flex items-center space-x-2">
+          <span class="text-gray-400 text-sm whitespace-nowrap">Ordenar por:</span>
+          <button 
+            (click)="cambiarOrden('nombre')"
+            [class.bg-green-500]="sortBy === 'nombre'"
+            [class.text-white]="sortBy === 'nombre'"
+            [class.text-gray-400]="sortBy !== 'nombre'"
+            class="px-3 py-2 rounded-lg bg-gray-900 border border-gray-700 hover:border-green-500 transition duration-200 text-sm flex items-center space-x-1">
+            <span>Nombre</span>
+            <svg *ngIf="sortBy === 'nombre'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path *ngIf="sortOrder === 'asc'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+              <path *ngIf="sortOrder === 'desc'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          
+          <button 
+            (click)="cambiarOrden('artista')"
+            [class.bg-green-500]="sortBy === 'artista'"
+            [class.text-white]="sortBy === 'artista'"
+            [class.text-gray-400]="sortBy !== 'artista'"
+            class="px-3 py-2 rounded-lg bg-gray-900 border border-gray-700 hover:border-green-500 transition duration-200 text-sm flex items-center space-x-1">
+            <span>Artista</span>
+            <svg *ngIf="sortBy === 'artista'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path *ngIf="sortOrder === 'asc'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+              <path *ngIf="sortOrder === 'desc'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+          
+          <button 
+            (click)="cambiarOrden('fecha')"
+            [class.bg-green-500]="sortBy === 'fecha'"
+            [class.text-white]="sortBy === 'fecha'"
+            [class.text-gray-400]="sortBy !== 'fecha'"
+            class="px-3 py-2 rounded-lg bg-gray-900 border border-gray-700 hover:border-green-500 transition duration-200 text-sm flex items-center space-x-1">
+            <span>Fecha</span>
+            <svg *ngIf="sortBy === 'fecha'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path *ngIf="sortOrder === 'asc'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+              <path *ngIf="sortOrder === 'desc'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mensajes -->
+    <div *ngIf="successMessage" class="mb-6 p-4 bg-green-500/20 border border-green-500/50 rounded-lg text-green-400 flex items-center space-x-2 animate-slide-down">
+      <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+      </svg>
+      <span>{{ successMessage }}</span>
+    </div>
+
+    <div *ngIf="error" class="mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 flex items-center space-x-2 animate-slide-down">
+      <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+      </svg>
+      <span>{{ error }}</span>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="flex flex-col items-center justify-center py-20">
+      <div class="relative">
+        <div class="w-16 h-16 border-4 border-gray-700 border-t-green-500 rounded-full animate-spin"></div>
+        <svg class="absolute inset-0 m-auto w-8 h-8 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+        </svg>
+      </div>
+      <p class="text-gray-400 mt-4">Cargando favoritas...</p>
+    </div>
+
+    <!-- Sin favoritas -->
+    <div *ngIf="!loading && favoritas.length === 0" class="text-center py-20">
+      <div class="inline-flex items-center justify-center w-24 h-24 bg-gray-800 rounded-full mb-6">
+        <svg class="w-12 h-12 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+      </div>
+      <h3 class="text-2xl font-bold text-white mb-2">No tienes favoritas aún</h3>
+      <p class="text-gray-400 mb-6">Explora la música y marca tus canciones favoritas</p>
+      <button 
+        [routerLink]="['/dashboard']"
+        class="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition duration-200 inline-flex items-center space-x-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <span>Explorar música</span>
+      </button>
+    </div>
+
+    <!-- Sin resultados de búsqueda -->
+    <div *ngIf="!loading && favoritas.length > 0 && favoritasFiltradas.length === 0" class="text-center py-20">
+      <div class="inline-flex items-center justify-center w-24 h-24 bg-gray-800 rounded-full mb-6">
+        <svg class="w-12 h-12 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </div>
+      <h3 class="text-2xl font-bold text-white mb-2">No se encontraron resultados</h3>
+      <p class="text-gray-400 mb-6">Intenta con otros términos de búsqueda</p>
+      <button 
+        (click)="searchQuery = ''; onBuscar()"
+        class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition duration-200">
+        Limpiar búsqueda
+      </button>
+    </div>
+
+    <!-- VISTA GRID -->
+    <div *ngIf="!loading && favoritasFiltradas.length > 0 && vistaActual === 'grid'" 
+         class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+      
+      <div *ngFor="let favorita of favoritasFiltradas" 
+           class="group bg-gray-800/50 backdrop-blur-sm rounded-lg overflow-hidden border border-gray-700 hover:border-green-500 transition-all duration-300 hover:transform hover:scale-105">
+        
+        <!-- Portada -->
+        <div class="relative aspect-square">
+          <img 
+            [src]="favorita.url_portada || 'assets/default-cover.jpg'" 
+            [alt]="favorita.cancionNombre"
+            class="w-full h-full object-cover"
+            (error)="$any($event.target).src='assets/default-cover.jpg'"
+          />
+          
+          <!-- Overlay con controles -->
+          <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center space-x-2">
+            <!-- Play/Pause -->
+            <button 
+              (click)="reproducir(favorita)"
+              class="w-12 h-12 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center text-white transition duration-200 transform hover:scale-110">
+              <svg *ngIf="cancionActual?.id !== favorita.id || !isPlaying" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+              <svg *ngIf="cancionActual?.id === favorita.id && isPlaying" class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+              </svg>
+            </button>
+            
+            <!-- Eliminar -->
+            <button 
+              (click)="confirmarEliminar(favorita)"
+              class="w-10 h-10 bg-red-500/80 hover:bg-red-600 rounded-full flex items-center justify-center text-white transition duration-200 transform hover:scale-110">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Indicador reproduciendo -->
+          <div *ngIf="cancionActual?.id === favorita.id" 
+               class="absolute top-2 right-2 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+            <div class="flex space-x-0.5">
+              <div class="w-1 bg-white rounded-full animate-pulse" style="height: 12px; animation-delay: 0ms;"></div>
+              <div class="w-1 bg-white rounded-full animate-pulse" style="height: 16px; animation-delay: 150ms;"></div>
+              <div class="w-1 bg-white rounded-full animate-pulse" style="height: 12px; animation-delay: 300ms;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info -->
+        <div class="p-3">
+          <h3 class="text-white font-medium text-sm truncate mb-1" [title]="favorita.cancionNombre">
+            {{ favorita.cancionNombre || 'Sin título' }}
+          </h3>
+          <p class="text-gray-400 text-xs truncate" [title]="favorita.artistaNombre">
+            {{ favorita.artistaNombre || 'Artista desconocido' }}
+          </p>
+          <p *ngIf="favorita.duracion" class="text-gray-500 text-xs mt-1">
+            {{ favorita.duracion }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- VISTA LISTA -->
+    <div *ngIf="!loading && favoritasFiltradas.length > 0 && vistaActual === 'list'" 
+         class="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden">
+      
+      <!-- Header de la tabla -->
+      <div class="hidden md:grid grid-cols-12 gap-4 px-4 py-3 bg-gray-900/50 border-b border-gray-700 text-gray-400 text-sm font-medium">
+        <div class="col-span-1 text-center">#</div>
+        <div class="col-span-5">Canción</div>
+        <div class="col-span-3">Artista</div>
+        <div class="col-span-2">Duración</div>
+        <div class="col-span-1 text-center">Acciones</div>
+      </div>
+
+      <!-- Filas -->
+      <div *ngFor="let favorita of favoritasFiltradas; let i = index" 
+           [class.bg-green-500/10]="cancionActual?.id === favorita.id"
+           class="grid grid-cols-12 gap-4 px-4 py-3 border-b border-gray-700 hover:bg-gray-700/30 transition duration-200 group items-center">
+        
+        <!-- Número / Play button -->
+        <div class="col-span-1 flex items-center justify-center">
+          <span class="text-gray-400 text-sm group-hover:hidden">{{ i + 1 }}</span>
+          <button 
+            (click)="reproducir(favorita)"
+            class="hidden group-hover:block text-white hover:text-green-400 transition duration-200">
+            <svg *ngIf="cancionActual?.id !== favorita.id || !isPlaying" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+            <svg *ngIf="cancionActual?.id === favorita.id && isPlaying" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Canción (con portada) -->
+        <div class="col-span-5 flex items-center space-x-3">
+          <div class="relative flex-shrink-0">
+            <img 
+              [src]="favorita.url_portada || 'assets/default-cover.jpg'" 
+              [alt]="favorita.cancionNombre"
+              class="w-12 h-12 rounded-lg object-cover"
+              (error)="$any($event.target).src='assets/default-cover.jpg'"
+            />
+            <div *ngIf="cancionActual?.id === favorita.id" 
+                 class="absolute inset-0 bg-green-500/20 rounded-lg flex items-center justify-center">
+              <div class="flex space-x-0.5">
+                <div class="w-1 bg-green-400 rounded-full animate-pulse" style="height: 8px;"></div>
+                <div class="w-1 bg-green-400 rounded-full animate-pulse" style="height: 12px; animation-delay: 150ms;"></div>
+                <div class="w-1 bg-green-400 rounded-full animate-pulse" style="height: 8px; animation-delay: 300ms;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="min-w-0">
+            <p class="text-white font-medium truncate text-sm">
+              {{ favorita.cancionNombre || 'Sin título' }}
+            </p>
+            <p class="text-gray-400 text-xs truncate md:hidden">
+              {{ favorita.artistaNombre || 'Artista desconocido' }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Artista -->
+        <div class="col-span-3 hidden md:block">
+          <p class="text-gray-300 text-sm truncate">
+            {{ favorita.artistaNombre || 'Artista desconocido' }}
+          </p>
+        </div>
+
+        <!-- Duración -->
+        <div class="col-span-2 hidden md:block">
+          <p class="text-gray-400 text-sm">
+            {{ favorita.duracion || '--:--' }}
+          </p>
+        </div>
+
+        <!-- Acciones -->
+        <div class="col-span-1 flex items-center justify-center">
+          <button 
+            (click)="confirmarEliminar(favorita)"
+            class="text-gray-400 hover:text-red-400 transition duration-200"
+            title="Eliminar de favoritos">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reproductor flotante (si hay canción activa) -->
+  <div *ngIf="cancionActual" 
+       class="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-gray-900 to-gray-800 border-t border-gray-700 backdrop-blur-sm z-40">
+    <div class="max-w-7xl mx-auto px-4 py-3">
+      
+      <!-- Barra de progreso -->
+      <div class="mb-3">
+        <input 
+          type="range" 
+          [value]="currentTime" 
+          [max]="duration"
+          (input)="cambiarTiempo($event)"
+          class="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-green-500"
+          [style.background]="
+            'linear-gradient(to right, rgb(34, 197, 94) 0%, rgb(34, 197, 94) ' + getProgresoReproduccion() + '%, rgb(55, 65, 81) ' + getProgresoReproduccion() + '%, rgb(55, 65, 81) 100%)'
+          "
+        />
+        <div class="flex justify-between text-xs text-gray-400 mt-1">
+          <span>{{ formatearTiempo(currentTime) }}</span>
+          <span>{{ formatearTiempo(duration) }}</span>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <!-- Info de la canción -->
+        <div class="flex items-center space-x-3 flex-1 min-w-0">
+          <img 
+            [src]="cancionActual.url_portada || 'assets/default-cover.jpg'" 
+            [alt]="cancionActual.cancionNombre"
+            class="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+            (error)="$any($event.target).src='assets/default-cover.jpg'"
+          />
+          <div class="min-w-0">
+            <p class="text-white font-medium text-sm truncate">
+              {{ cancionActual.cancionNombre }}
+            </p>
+            <p class="text-gray-400 text-xs truncate">
+              {{ cancionActual.artistaNombre }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Controles -->
+        <div class="flex items-center space-x-4 mx-8">
+          <button 
+            (click)="anteriorCancion()"
+            class="text-gray-400 hover:text-white transition duration-200">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+            </svg>
+          </button>
+
+          <button 
+            (click)="isPlaying ? pausar() : reanudar()"
+            class="w-10 h-10 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center text-white transition duration-200 transform hover:scale-110">
+            <svg *ngIf="!isPlaying" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+            <svg *ngIf="isPlaying" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+            </svg>
+          </button>
+
+          <button 
+            (click)="siguienteCancion()"
+            class="text-gray-400 hover:text-white transition duration-200">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M16 18h2V6h-2M6 18l8.5-6L6 6z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Control de volumen -->
+        <div class="hidden md:flex items-center space-x-2 flex-1 justify-end">
+          <button (click)="toggleMute()" class="text-gray-400 hover:text-white transition duration-200">
+            <svg *ngIf="volume > 0.5" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            </svg>
+            <svg *ngIf="volume > 0 && volume <= 0.5" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M7 9v6h4l5 5V4l-5 5H7z"/>
+            </svg>
+            <svg *ngIf="volume === 0" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+            </svg>
+          </button>
+          <input 
+            type="range" 
+            [value]="volume" 
+            max="1"
+            step="0.01"
+            (input)="cambiarVolumen($event)"
+            class="w-24 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-green-500"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de confirmación de eliminación -->
+  <div *ngIf="mostrarConfirmacion" 
+       class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+       (click)="cancelarEliminar()">
+    <div class="bg-gray-800 rounded-xl p-6 max-w-md w-full border border-gray-700 shadow-2xl"
+         (click)="$event.stopPropagation()">
+      
+      <!-- Icono -->
+      <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+
+      <h3 class="text-xl font-bold text-white text-center mb-2">
+        Eliminar de favoritos
+      </h3>
+      
+      <p class="text-gray-400 text-center mb-6">
+        ¿Estás seguro de que deseas eliminar 
+        <span class="text-white font-medium">"{{ favoritaAEliminar?.cancionNombre }}"</span> 
+        de tus favoritos?
+      </p>
+
+      <div class="flex space-x-3">
+        <button 
+          (click)="cancelarEliminar()"
+          class="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition duration-200">
+          Cancelar
+        </button>
+        <button 
+          (click)="eliminarFavorita()"
+          class="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition duration-200">
+          Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

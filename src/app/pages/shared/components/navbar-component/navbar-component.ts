@@ -1,10 +1,13 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { ApiServices } from '../../services/api-services';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { CommonModule } from '@angular/common';
+import { RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { AuthService, Usuario } from '../../services/auth-service';
+
 
 interface SearchResult {
   type: 'cancion' | 'album' | 'artista';
@@ -23,14 +26,16 @@ interface SearchResult {
   styleUrl: './navbar-component.css'
 })
 export class NavbarComponent implements OnInit {
-  @Input() currentUser: any = null;
-  @Input() isAdmin: boolean = false;
-  @Input() adminNotificationsCount: number = 0;
+  @Input() isAdmin: boolean = false; // Mantener para compatibilidad, pero usaremos el servicio
   
-  @Output() onSearch = new EventEmitter<string>();
-  @Output() onQRScannerOpen = new EventEmitter<void>();
-  @Output() onLogout = new EventEmitter<void>();
-  
+  currentUser: Usuario | null = null;
+  isAdminUser: boolean = false;
+  isMenuOpen: boolean = false;
+  private userSubscription?: Subscription;
+
+  @Output() onSearch: EventEmitter<string> = new EventEmitter<string>();
+  @Output() onQRScannerOpen: EventEmitter<void> = new EventEmitter<void>();
+
   searchQuery: string = '';
   searchResults: SearchResult[] = [];
   showSearchResults: boolean = false;
@@ -40,10 +45,15 @@ export class NavbarComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private apiServices: ApiServices
+    private apiServices: ApiServices,
+    private authService: AuthService  
   ) {}
 
   ngOnInit(): void {
+    this.userSubscription = this.authService.currentUser$.subscribe(user => {
+      this.currentUser = user;
+      this.isAdminUser = this.authService.isAdmin();
+    });
     // Configurar búsqueda con debounce
     this.searchSubject.pipe(
       debounceTime(300), // Esperar 300ms después de que el usuario deje de escribir
@@ -54,7 +64,21 @@ export class NavbarComponent implements OnInit {
   }
 
   ngOnDestroy(): void {
+    this.userSubscription?.unsubscribe();
     this.searchSubject.complete();
+  }
+
+    toggleMenu(): void {
+    this.isMenuOpen = !this.isMenuOpen;
+  }
+
+  logout(): void {
+      this.authService.logout();
+  }
+
+  navigateTo(route: string): void {
+    this.router.navigate([route]);
+    this.isMenuOpen = false;
   }
 
   // Búsqueda
@@ -287,7 +311,4 @@ export class NavbarComponent implements OnInit {
     this.router.navigate(['/configuracion']);
   }
 
-  logout(): void {
-    this.onLogout.emit();
-  }
 }

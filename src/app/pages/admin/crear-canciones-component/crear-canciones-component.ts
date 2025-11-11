@@ -262,22 +262,24 @@ export class CrearCancionesComponent implements OnInit {
     });
   }
 
-  // ✅ MODIFICADO: Solo importar nombre y portada de Deezer
-  seleccionarCancionDeezer(track: any): void {
-    // Solo llenar nombre y portada
-    this.nuevaCancion.nombre = track.title || '';
-    this.nuevaCancion.url_portada = track.album.cover_medium || track.album.cover_big || track.album.cover_xl || '';
-    
-    this.busquedaDeezer = '';
-    this.resultadosDeezer = [];
-    this.mostrarResultadosDeezer = false;
-    
-    this.successMessage = 'Nombre y portada importados desde Deezer. Ahora sube el archivo MP3.';
-    setTimeout(() => {
-      this.successMessage = '';
-    }, 3000);
-  }
-
+seleccionarCancionDeezer(track: any): void {
+  // Solo llenar nombre y portada
+  this.nuevaCancion.nombre = track.title || '';
+  this.nuevaCancion.url_portada = track.album.cover_medium || track.album.cover_big || track.album.cover_xl || '';
+  
+  console.log('✅ Datos importados de Deezer:');
+  console.log('   Nombre:', this.nuevaCancion.nombre);
+  console.log('   Portada:', this.nuevaCancion.url_portada);
+  
+  this.busquedaDeezer = '';
+  this.resultadosDeezer = [];
+  this.mostrarResultadosDeezer = false;
+  
+  this.successMessage = 'Nombre y portada importados desde Deezer. Ahora sube el archivo MP3.';
+  setTimeout(() => {
+    this.successMessage = '';
+  }, 3000);
+}
   cerrarResultadosDeezer(): void {
     this.mostrarResultadosDeezer = false;
     this.busquedaDeezer = '';
@@ -307,32 +309,31 @@ agregarCancion(event: Event): void {
   this.error = '';
   this.successMessage = '';
 
-  // ✅ Crear objeto de datos EXACTAMENTE como lo espera el backend
+  // ✅ CORREGIDO: Incluir TODOS los datos necesarios
   const cancionData = {
     nombre: this.nuevaCancion.nombre.trim(),
     artista_id: this.nuevaCancion.artista_id,
     album_id: this.nuevaCancion.album_id || null,
-    url_cancion: '', // Se llenará en el backend
-    url_portada: '', // Se llenará en el backend si hay imagen
-    activo: this.nuevaCancion.activo ?? 1
+    url_cancion: '', // Se llenará en el backend con la ruta del archivo
+    url_portada: this.nuevaCancion.url_portada?.trim() || '', // ✅ URL de Deezer
+    activo: this.nuevaCancion.activo ?? 1,
+    duracion: this.nuevaCancion.duracion || null // ✅ Duración detectada
   };
 
   // ✅ Crear FormData con los nombres EXACTOS que espera el backend
   const formData = new FormData();
   
-  // 1. datos (JSON stringificado)
+  // 1. datos (JSON stringificado) - CON todos los campos
   formData.append('datos', JSON.stringify(cancionData));
   
   // 2. cancion (archivo MP3)
   formData.append('cancion', this.archivoMP3, this.archivoMP3.name);
-  
-  // 3. imagen (si hay URL de portada, podrías descargarla y subirla, pero por ahora solo URL)
-  // Si quieres subir una imagen desde archivo, necesitarías un input adicional
-  // Por ahora, si hay URL de Deezer, la guardamos en datos
 
   console.log('📤 Enviando canción con archivo MP3');
-  console.log('📋 Datos:', cancionData);
+  console.log('📋 Datos completos:', cancionData);
   console.log('🎵 Archivo MP3:', this.archivoMP3.name, `(${(this.archivoMP3.size / 1024 / 1024).toFixed(2)} MB)`);
+  console.log('🖼️ URL Portada:', cancionData.url_portada || 'No especificada');
+  console.log('⏱️ Duración:', cancionData.duracion || 'No detectada');
 
   // Simular progreso
   const interval = setInterval(() => {

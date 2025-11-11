@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ApiServices } from '../../shared/services/api-services';
+import { AuthService, Usuario } from '../../shared/services/auth-service';
 
 @Component({
   selector: 'app-login-component',
@@ -26,7 +27,8 @@ export class LoginComponent {
 
   constructor(
     private router: Router,
-    private apiServices: ApiServices
+    private apiServices: ApiServices,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -36,20 +38,15 @@ export class LoginComponent {
 
   // Verificar si ya hay una sesión activa
   private checkExistingAuth(): void {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      // Verificar si el token es válido
-      this.apiServices.verificarToken().subscribe({
-        next: (response) => {
-          if (response.valid) {
-            this.router.navigate(['/dashboard']);
-          }
-        },
-        error: () => {
-          // Token inválido, limpiar datos
-          this.apiServices.clearAuthData();
-        }
-      });
+    if (this.authService.isAuthenticated()) {
+      console.log('✅ Usuario ya autenticado, redirigiendo...');
+      const isAdmin = this.authService.isAdmin();
+      
+      if (isAdmin) {
+        this.router.navigate(['/admin/canciones']);
+      } else {
+        this.router.navigate(['/dashboard']);
+      }
     }
   }
 
@@ -68,15 +65,15 @@ export class LoginComponent {
       password: this.loginData.password
     };
 
+    console.log('🔐 Intentando login con:', credentials.email);
+
     this.apiServices.login(credentials).subscribe({
       next: (response) => {
-        console.log('Login exitoso:', response);
-        
-        // Guardar datos de autenticación
+        console.log('📥 Respuesta del servidor:', response);
         this.handleLoginSuccess(response);
       },
       error: (error) => {
-        console.error('Error en login:', error);
+        console.error('❌ Error en login:', error);
         this.handleLoginError(error);
         this.isLoading = false;
       },
@@ -85,12 +82,37 @@ export class LoginComponent {
 
   // Manejar login exitoso
   private handleLoginSuccess(response: any): void {
-    // Guardar token y datos del usuario
-    const token = response.data.token;
-    const userData = response.data.email;
+    try {
+      // ✅ Extraer datos del response
+      const token = response.data?.token || response.token;
+      const usuarioData = response.data?.usuario || response.usuario || response.data;
 
-    if (token) {
-      this.apiServices.saveAuthData(token, userData);
+      console.log('📋 Datos extraídos:');
+      console.log('   Token:', token ? 'Existe' : 'No existe');
+      console.log('   Usuario raw:', usuarioData);
+
+      if (!token) {
+        throw new Error('No se recibió token de autenticación');
+      }
+
+      if (!usuarioData) {
+        throw new Error('No se recibieron datos del usuario');
+      }
+
+      // ✅ Crear objeto de usuario con rol_id como NÚMERO
+      const usuario: Usuario = {
+        id: Number(usuarioData.id),
+        nombre: usuarioData.nombre || usuarioData.name || 'Usuario',
+        email: usuarioData.email || this.loginData.email,
+        rol_id: Number(usuarioData.rol_id || usuarioData.role_id || usuarioData.rol || 2)
+      };
+
+      console.log('👤 Usuario procesado:', usuario);
+      console.log('🎭 rol_id:', usuario.rol_id, 'tipo:', typeof usuario.rol_id);
+      console.log('👑 ¿Es admin?:', usuario.rol_id === 1);
+
+      // ✅ Guardar en AuthService
+      this.authService.login(usuario, token);
 
       // Recordar usuario si está marcado
       if (this.loginData.rememberMe) {
@@ -99,14 +121,25 @@ export class LoginComponent {
       }
 
       // Mostrar mensaje de éxito
-      this.showSuccessMessage();
+      this.showSuccessMessage(usuario);
 
-      // Navegar al dashboard después de un breve delay
+      // ✅ Redirigir según el rol
       setTimeout(() => {
-        this.router.navigate(['/dashboard']);
+        this.isLoading = false;
+        
+        if (usuario.rol_id === 1) {
+          console.log('🚀 Redirigiendo a panel de admin...');
+          this.router.navigate(['/dashboard']);
+        } else {
+          console.log('🚀 Redirigiendo a dashboard...');
+          this.router.navigate(['/dashboard']);
+        }
       }, 1000);
-    } else {
-      this.showErrorMessage('Respuesta de servidor inválida');
+
+    } catch (error: any) {
+      console.error('❌ Error procesando respuesta:', error);
+      this.showErrorMessage(error.message || 'Error al procesar la respuesta del servidor');
+      this.isLoading = false;
     }
   }
 
@@ -191,20 +224,18 @@ export class LoginComponent {
     this.errorMessage = '';
   }
 
-  private showSuccessMessage(): void {
-    // Aquí podrías mostrar un toast de éxito
-    console.log('Login exitoso - Redirigiendo...');
+  private showSuccessMessage(usuario: Usuario): void {
+    const rolText = usuario.rol_id === 1 ? 'Administrador' : 'Usuario';
+    console.log(`✅ Bienvenido ${usuario.nombre} (${rolText})`);
   }
 
   // Login con redes sociales (placeholder)
   loginWithGoogle(): void {
     console.log('Login con Google - Por implementar');
-    // Aquí implementarías la autenticación con Google
   }
 
   loginWithFacebook(): void {
     console.log('Login con Facebook - Por implementar');
-    // Aquí implementarías la autenticación con Facebook
   }
 
   // Auto-completar email si se recordó al usuario

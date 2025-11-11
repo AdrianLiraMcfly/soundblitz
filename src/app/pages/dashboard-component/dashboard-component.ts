@@ -149,6 +149,9 @@ export class DashboardComponent implements OnInit {
   navigateToAlbum(id: any): void {
     this.router.navigate(['/album', id]);
   }
+  goFavorites(): void {
+    this.router.navigate(['/favoritas']);
+  }
 
   // Reproducción
   reproducirCancion(cancion: any): void {

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiServices } from '../../shared/services/api-services';
+import { NavbarComponent } from '../../shared/components/navbar-component/navbar-component';
 
 interface Album {
   id?: any;
@@ -22,7 +23,7 @@ interface Artista {
 @Component({
   selector: 'app-crear-albumes-component',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NavbarComponent],
   templateUrl: './crear-albumes-component.html',
   styleUrl: './crear-albumes-component.css'
 })
