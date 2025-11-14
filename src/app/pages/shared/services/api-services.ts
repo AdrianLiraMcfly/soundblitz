@@ -184,26 +184,20 @@ crearCancionFormData(formData: FormData): Observable<any> {
 
   // ===== FAVORITOS =====
   // GET /api/favoritas - Obtener favoritas del usuario
-  getFavoritas(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/favoritas`, { 
-      headers: this.getAuthHeaders() 
-    });
-  }
+getFavoritas(): Observable<any> {
+  return this.http.get(`${this.apiUrl}/favoritas`);
+}
 
-  // POST /api/favoritas - Agregar favorita
-  agregarFavorita(songId: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}/favoritas`, 
-      { songId }, 
-      { headers: this.getAuthHeaders() }
-    );
-  }
+agregarFavorita(usuario_id: number, cancion_id: number): Observable<any> {
+  return this.http.post(`${this.apiUrl}/favoritas`, {
+    usuario_id,
+    cancion_id
+  });
+}
 
-  // DELETE /api/favoritas/:id - Eliminar favorita
-  eliminarFavorita(id: string): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/favoritas/${id}`, { 
-      headers: this.getAuthHeaders() 
-    });
-  }
+eliminarFavorita(id: number): Observable<any> {
+  return this.http.delete(`${this.apiUrl}/favoritas/${id}`);
+}
 
   // ===== ROLES =====
   // GET /api/roles - Obtener todos los roles

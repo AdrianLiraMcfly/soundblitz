@@ -5,6 +5,20 @@
     (qrButtonClick)="openQRScanner()">
   </app-navbar>
 
+    <!-- ✅ Notificación Toast -->
+  <div *ngIf="notificacion.visible" 
+       class="fixed top-20 right-4 z-50 animate-slide-in">
+    <div [class]="'px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3 ' + 
+                   (notificacion.tipo === 'success' ? 'bg-green-600' : 'bg-red-600') + ' text-white'">
+      <svg *ngIf="notificacion.tipo === 'success'" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+      </svg>
+      <svg *ngIf="notificacion.tipo === 'error'" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+      </svg>
+      <span class="font-medium">{{ notificacion.mensaje }}</span>
+    </div>
+  </div>
   <!-- QR Scanner Modal -->
   <div *ngIf="showQRScanner" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-gray-900 rounded-2xl p-6 w-full max-w-md border border-gray-700">
@@ -175,11 +189,12 @@
             <div class="relative mb-4">
               <div class="w-full aspect-square rounded-full overflow-hidden bg-gradient-to-br from-gray-700 to-gray-800 shadow-xl group-hover:shadow-2xl transition-all duration-300">
                 <img *ngIf="artista.url_imagen" 
-                     [src]="artista.url_imagen" 
-                     [alt]="artista.nombre"
-                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                    [src]="artista.url_imagen.startsWith('http') ? artista.url_imagen : 'http://localhost:8085/files' + artista.url_imagen" 
+                    [alt]="artista.nombre"
+                    class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    (error)="$any($event.target).style.display='none'; $any($event.target).nextElementSibling.style.display='flex'">
                 <div *ngIf="!artista.url_imagen" 
-                     class="w-full h-full flex items-center justify-center">
+                    class="w-full h-full flex items-center justify-center">
                   <span class="text-white text-3xl font-bold">{{ getInitials(artista.nombre) }}</span>
                 </div>
               </div>
@@ -219,12 +234,13 @@
                class="bg-gray-800/30 backdrop-blur-sm rounded-lg p-4 hover:bg-gray-700/50 transition-all duration-200 cursor-pointer group">
             <div class="relative mb-3">
               <div class="w-full aspect-square bg-gradient-to-br from-gray-700 to-gray-800 rounded-lg overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-300">
-                <img *ngIf="album.url_portada" 
-                     [src]="album.url_portada" 
-                     [alt]="album.nombre"
-                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300">
+                <img 
+                    [src]="portadaALbum(album)" 
+                    [alt]="album.nombre"
+                    class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    (error)="$any($event.target).style.display='none'; $any($event.target).nextElementSibling.style.display='flex'">
                 <div *ngIf="!album.url_portada" 
-                     class="w-full h-full flex items-center justify-center">
+                    class="w-full h-full flex items-center justify-center">
                   <svg class="w-8 h-8 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
                   </svg>
@@ -262,8 +278,8 @@
 
         <div class="bg-gray-800/30 backdrop-blur-sm rounded-xl p-4 space-y-2">
           <div *ngFor="let cancion of canciones.slice(0, 10); let i = index" 
-               (click)="reproducirCancion(cancion)"
-               class="group flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-700/50 transition cursor-pointer">
+              (click)="reproducirCancion(cancion)"
+              class="group flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-700/50 transition cursor-pointer">
             
             <!-- Número / Play icon -->
             <div class="w-8 flex-shrink-0 text-center">
@@ -273,14 +289,15 @@
               </svg>
             </div>
 
-            <!-- Portada -->
             <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 shadow-md">
-              <img *ngIf="cancion.url_portada" 
-                   [src]="cancion.url_portada" 
-                   [alt]="cancion.nombre"
-                   class="w-full h-full object-cover">
+              <img 
+                  [src]="cancion.url_portada" 
+                  [alt]="cancion.nombre"
+                  class="w-full h-full object-cover"
+                  (error)="$any($event.target).style.display='none'"
+                  loading="lazy">
               <div *ngIf="!cancion.url_portada" 
-                   class="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+                  class="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
                 <span class="text-white text-xs font-bold">{{ getInitials(cancion.nombre) }}</span>
               </div>
             </div>

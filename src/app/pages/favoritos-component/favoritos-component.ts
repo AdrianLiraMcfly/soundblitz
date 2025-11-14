@@ -199,7 +199,7 @@ export class FavoritasComponent implements OnInit, OnDestroy {
 
     console.log(`🗑️ Eliminando favorita: ${nombre} (ID: ${id})`);
 
-    this.apiServices.eliminarFavorita(id.toString()).subscribe({
+    this.apiServices.eliminarFavorita(id).subscribe({
       next: () => {
         console.log('✅ Favorita eliminada exitosamente');
         

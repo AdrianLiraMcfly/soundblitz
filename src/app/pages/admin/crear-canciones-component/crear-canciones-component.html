@@ -83,7 +83,7 @@
 
               <!-- Resultados de Deezer -->
               <div *ngIf="mostrarResultadosDeezer && resultadosDeezer.length > 0" 
-                   class="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl max-h-64 overflow-y-auto z-50">
+                  class="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl max-h-64 overflow-y-auto z-50">
                 <div class="p-2 border-b border-gray-700 flex items-center justify-between">
                   <span class="text-xs text-gray-400">{{ resultadosDeezer.length }} resultados</span>
                   <button 
@@ -425,13 +425,23 @@
                   <!-- Canción -->
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="flex items-center space-x-3">
-                      <div *ngIf="cancion.url_portada" class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
-                        <img [src]="cancion.url_portada" [alt]="cancion.nombre" class="w-full h-full object-cover">
-                      </div>
-                      <div *ngIf="!cancion.url_portada" [class]="'w-12 h-12 bg-gradient-to-br ' + getColorAvatar(i) + ' rounded-lg flex items-center justify-center flex-shrink-0'">
-                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-                        </svg>
+                      <!-- ✅ CORREGIDO: Mostrar portada con mejor manejo de errores -->
+                      <div class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-700">
+                        <img 
+                          *ngIf="cancion.url_portada" 
+                          [src]="cancion.url_portada" 
+                          [alt]="cancion.nombre"
+                          class="w-full h-full object-cover"
+                          (error)="$any($event.target).style.display='none'; $any($event.target).nextElementSibling.style.display='flex'"
+                        />
+                        <!-- Fallback si falla la imagen -->
+                        <div 
+                          [class]="'w-full h-full bg-gradient-to-br ' + getColorAvatar(i) + ' flex items-center justify-center'"
+                          [style.display]="cancion.url_portada ? 'none' : 'flex'">
+                          <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                          </svg>
+                        </div>
                       </div>
                       <div>
                         <p class="text-white font-medium">{{ cancion.nombre }}</p>

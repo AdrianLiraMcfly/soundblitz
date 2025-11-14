@@ -112,80 +112,87 @@ export class PlayerService {
     });
   }
 
-  playSong(song: Cancion): void {
-    console.log('🎵 Intentando reproducir:', {
-      nombre: song.nombre,
-      url: song.url_cancion,
-      artista: song.artistaNombre
-    });
-    
-    if (!song.url_cancion) {
-      console.error('❌ No hay URL de canción');
-      alert('Esta canción no tiene URL de reproducción');
-      return;
-    }
-
-    // ✅ Validar que la URL sea válida
-    try {
-      new URL(song.url_cancion);
-    } catch (error) {
-      console.error('❌ URL inválida:', song.url_cancion);
-      alert('La URL de la canción no es válida');
-      return;
-    }
-
-    // Si es la misma canción, solo play/pause
-    const currentSong = this.currentSongSubject.value;
-    if (currentSong?.id === song.id) {
-      console.log('🔁 Misma canción, alternando play/pause');
-      this.togglePlayPause();
-      return;
-    }
-
-    // ✅ Pausar y resetear antes de cargar nueva canción
-    if (this.audioElement) {
-      this.audioElement.pause();
-      this.audioElement.currentTime = 0;
-    }
-
-    // Nueva canción
-    this.currentSongSubject.next(song);
-    
-    if (this.audioElement) {
-      console.log('📥 Cargando audio desde:', song.url_cancion);
-      
-      this.audioElement.src = song.url_cancion;
-      this.audioElement.load();
-      
-      // ✅ Esperar un poco antes de intentar reproducir
-      setTimeout(() => {
-        this.audioElement?.play()
-          .then(() => {
-            console.log('✅ Reproducción iniciada exitosamente');
-            this.isPlayingSubject.next(true);
-          })
-          .catch(error => {
-            console.error('❌ Error al iniciar reproducción:', error);
-            console.error('Detalles:', {
-              name: error.name,
-              message: error.message,
-              url: song.url_cancion
-            });
-            
-            // Mensajes de error específicos
-            if (error.name === 'NotAllowedError') {
-              alert('El navegador bloqueó la reproducción automática. Haz click en play.');
-            } else if (error.name === 'NotSupportedError') {
-              alert('El formato de audio no es compatible con tu navegador.');
-            } else {
-              alert('No se pudo reproducir la canción. Verifica la URL.');
-            }
-            
-            this.isPlayingSubject.next(false);
-          });
-      }, 100);
-    }
+playSong(song: Cancion): void {
+  console.log('🎵 Intentando reproducir:', {
+    nombre: song.nombre,
+    url: song.url_cancion,
+    artista: song.artistaNombre
+  });
+  
+  // ✅ CORREGIDO: Validar que url_cancion no sea undefined/null
+  if (!song.url_cancion || song.url_cancion === 'undefined' || song.url_cancion === 'null') {
+    console.error('❌ No hay URL de canción válida');
+    alert('Esta canción no tiene URL de reproducción');
+    return;
   }
+
+  // ✅ Convertir a string y limpiar
+  const urlCancion = String(song.url_cancion).trim();
+  
+  console.log('🔍 URL procesada:', urlCancion);
+
+  // ✅ Validar que la URL sea válida
+  try {
+    new URL(urlCancion);
+  } catch (error) {
+    console.error('❌ URL inválida:', urlCancion);
+    alert('La URL de la canción no es válida:\n' + urlCancion);
+    return;
+  }
+
+  // Si es la misma canción, solo play/pause
+  const currentSong = this.currentSongSubject.value;
+  if (currentSong?.id === song.id) {
+    console.log('🔁 Misma canción, alternando play/pause');
+    this.togglePlayPause();
+    return;
+  }
+
+  // ✅ Pausar y resetear antes de cargar nueva canción
+  if (this.audioElement) {
+    this.audioElement.pause();
+    this.audioElement.currentTime = 0;
+  }
+
+  // Nueva canción
+  this.currentSongSubject.next(song);
+  
+  if (this.audioElement) {
+    console.log('📥 Cargando audio desde:', urlCancion);
+    
+    // ✅ Usar la URL limpia
+    this.audioElement.src = urlCancion;
+    this.audioElement.load();
+    
+    // ✅ Esperar un poco antes de intentar reproducir
+    setTimeout(() => {
+      this.audioElement?.play()
+        .then(() => {
+          console.log('✅ Reproducción iniciada exitosamente');
+          this.isPlayingSubject.next(true);
+        })
+        .catch(error => {
+          console.error('❌ Error al iniciar reproducción:', error);
+          console.error('Detalles:', {
+            name: error.name,
+            message: error.message,
+            url: urlCancion
+          });
+          
+          // Mensajes de error específicos
+          if (error.name === 'NotAllowedError') {
+            alert('El navegador bloqueó la reproducción automática. Haz click en play.');
+          } else if (error.name === 'NotSupportedError') {
+            alert('El formato de audio no es compatible con tu navegador.');
+          } else {
+            alert('No se pudo reproducir la canción. Verifica la URL:\n' + urlCancion);
+          }
+          
+          this.isPlayingSubject.next(false);
+        });
+    }, 100);
+  }
+}
 
   togglePlayPause(): void {
     if (!this.audioElement) {
