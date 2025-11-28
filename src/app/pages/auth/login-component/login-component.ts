@@ -229,14 +229,6 @@ export class LoginComponent {
     console.log(`✅ Bienvenido ${usuario.nombre} (${rolText})`);
   }
 
-  // Login con redes sociales (placeholder)
-  loginWithGoogle(): void {
-    console.log('Login con Google - Por implementar');
-  }
-
-  loginWithFacebook(): void {
-    console.log('Login con Facebook - Por implementar');
-  }
 
   // Auto-completar email si se recordó al usuario
   ngAfterViewInit(): void {

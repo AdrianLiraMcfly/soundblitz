@@ -266,4 +266,31 @@ playSong(song: Cancion): void {
   isPlaying(): boolean {
     return this.isPlayingSubject.value;
   }
+
+  getCurrentTime(): number {
+  return this.currentTimeSubject.value;
+}
+
+getDuration(): number {
+  return this.durationSubject.value;
+}
+
+getVolume(): number {
+  return this.audioElement?.volume || 0.7;
+}
+
+stop(): void {
+  if (this.audioElement) {
+    this.audioElement.pause();
+    this.audioElement.currentTime = 0;
+    this.isPlayingSubject.next(false);
+  }
+}
+
+toggleMute(): void {
+  if (this.audioElement) {
+    const currentVolume = this.audioElement.volume;
+    this.audioElement.volume = currentVolume === 0 ? 0.7 : 0;
+  }
+}
 }

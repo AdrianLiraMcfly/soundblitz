@@ -36,6 +36,12 @@ export class ApiServices {
     });
   }
 
+  me(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/usuarios/me`, { 
+      headers: this.getAuthHeaders() 
+    });
+  }
+
   // POST /api/usuarios - Crear usuario
   crearUsuario(userData: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/usuarios`, userData);
@@ -185,19 +191,26 @@ crearCancionFormData(formData: FormData): Observable<any> {
   // ===== FAVORITOS =====
   // GET /api/favoritas - Obtener favoritas del usuario
 getFavoritas(): Observable<any> {
-  return this.http.get(`${this.apiUrl}/favoritas`);
+  return this.http.get(`${this.apiUrl}/favoritas`, {
+    headers: this.getAuthHeaders()
+  });
 }
 
 agregarFavorita(usuario_id: number, cancion_id: number): Observable<any> {
   return this.http.post(`${this.apiUrl}/favoritas`, {
     usuario_id,
     cancion_id
+  }, {
+    headers: this.getAuthHeaders()
   });
 }
 
+
 eliminarFavorita(id: number): Observable<any> {
-  return this.http.delete(`${this.apiUrl}/favoritas/${id}`);
-}
+  return this.http.delete(`${this.apiUrl}/favoritas/${id}` , {
+    headers: this.getAuthHeaders()
+  });
+} 
 
   // ===== ROLES =====
   // GET /api/roles - Obtener todos los roles
@@ -260,22 +273,6 @@ eliminarFavorita(id: number): Observable<any> {
       { songId }, 
       { headers: this.getAuthHeaders() }
     );
-  }
-
-  // ===== UTILIDADES =====
-  
-  // Verificar si token es válido
-  verificarToken(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/verify-token`, { 
-      headers: this.getAuthHeaders() 
-    });
-  }
-
-  // GET /api/usuarios/me - Obtener datos del usuario actual por email
-  me(email: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/usuarios/me?email=${encodeURIComponent(email)}`, {
-      headers: this.getAuthHeaders() 
-    });
   }
 
 

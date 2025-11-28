@@ -45,20 +45,44 @@ export class DashboardComponent implements OnInit {
     this.loadFavoritas();
   }
 
-  // Cargar datos del usuario
-  private loadUserData(): void {
-    const userDataStr = localStorage.getItem('user_data');
-    console.log('🔍 Cargando datos del usuario desde localStorage:', userDataStr);
-    
-    if (userDataStr) {
-      try {
-        this.currentUser = JSON.parse(userDataStr);
-        console.log('✅ Usuario cargado:', this.currentUser);
-      } catch (error) {
-        console.error('❌ Error al parsear datos del usuario:', error);
+private loadUserData(): void {
+  const token = localStorage.getItem('authToken');
+  console.log('🔍 Token encontrado:', token ? 'Sí' : 'No');
+
+  // ✅ Obtener datos del usuario usando el endpoint /me
+  this.apiServices.me().subscribe({
+    next: (response) => {
+      console.log('📦 Respuesta del endpoint /me:', response);
+      
+      // Asignar datos del usuario
+      this.currentUser = response.data || response.usuario || response;
+      
+      console.log('✅ Usuario cargado desde token:', {
+        id: this.currentUser?.id,
+        nombre: this.currentUser?.nombre,
+        email: this.currentUser?.email,
+        rol_id: this.currentUser?.rol_id
+      });
+      
+      // ✅ Verificar que tenga ID
+      if (!this.currentUser?.id) {
+        console.error('⚠️ El usuario no tiene ID:', this.currentUser);
+        this.currentUser = null;
+        alert('Error al obtener datos de usuario');
+        this.router.navigate(['/login']);
+        return;
       }
-    }
-  }
+
+      // ✅ Cargar favoritas DESPUÉS de confirmar que hay usuario
+      console.log('👤 Usuario válido detectado, cargando favoritas...');
+      this.loadFavoritas();
+    },
+    error: (error) => {
+      console.error('❌ Error al obtener datos del usuario:', error);
+      console.error('   Status:', error.status);
+      console.error('   Mensaje:', error.error?.message || error.message);
+  }});
+}
 
   // Cargar todos los datos de la BD
   private loadAllData(): void {
@@ -274,10 +298,34 @@ agregarAFavoritos(cancion: any, event?: Event): void {
     event.stopPropagation();
   }
 
-  if (!this.currentUser?.id) {
+  console.log('🔍 DEBUG agregarAFavoritos - currentUser completo:', this.currentUser);
+  console.log('🔍 DEBUG agregarAFavoritos - currentUser.id:', this.currentUser?.id);
+  console.log('🔍 DEBUG agregarAFavoritos - tipo de id:', typeof this.currentUser?.id);
+
+  // ✅ Verificar que haya usuario logueado
+  if (!this.currentUser) {
+    console.error('❌ currentUser es null o undefined');
     alert('Debes iniciar sesión para agregar favoritos');
+    this.router.navigate(['/login']);
     return;
   }
+
+  if (!this.currentUser.id) {
+    console.error('❌ currentUser.id es null o undefined');
+    console.error('   currentUser completo:', this.currentUser);
+    alert('Error: No se pudo obtener tu ID de usuario. Inicia sesión nuevamente.');
+    localStorage.removeItem('user_data');
+    localStorage.removeItem('token');
+    this.router.navigate(['/login']);
+    return;
+  }
+
+  console.log('👤 Usuario actual:', {
+    id: this.currentUser.id,
+    nombre: this.currentUser.nombre,
+    email: this.currentUser.email,
+    rol_id: this.currentUser.rol_id
+  });
 
   const esFavorito = this.esFavorito(cancion.id);
 
@@ -288,13 +336,22 @@ agregarAFavoritos(cancion: any, event?: Event): void {
     );
     
     if (!favorita) {
-      console.error('❌ No se encontró la favorita');
+      console.error('❌ No se encontró la favorita en el array local');
+      console.log('   cancionesFavoritas:', this.cancionesFavoritas);
+      console.log('   Buscando cancion.id:', cancion.id);
       return;
     }
 
-    // ✅ CORREGIDO: Eliminar por ID de favorita
+    console.log('💔 Eliminando favorita:', {
+      id_favorita: favorita.id,
+      cancion_id: cancion.id,
+      usuario_id: this.currentUser.id
+    });
+
+    // ✅ Eliminar por ID de favorita
     this.apiServices.eliminarFavorita(favorita.id).subscribe({
       next: (response) => {
+        console.log('✅ Respuesta del servidor (eliminar):', response);
         console.log('💔 Canción removida de favoritos:', cancion.nombre);
         
         // Actualizar localmente
@@ -303,48 +360,96 @@ agregarAFavoritos(cancion: any, event?: Event): void {
           f => f.id !== favorita.id
         );
         
+        console.log('📊 Estado actualizado:', {
+          total: this.cancionesFavoritas.length,
+          ids: Array.from(this.favoritasIds)
+        });
+        
         this.mostrarNotificacion('Eliminado de favoritos', 'error');
       },
       error: (error) => {
         console.error('❌ Error al eliminar de favoritos:', error);
-        alert('Error al eliminar de favoritos');
+        console.error('   Status:', error.status);
+        console.error('   Mensaje:', error.error?.message || error.message);
+        alert('Error al eliminar de favoritos: ' + (error.error?.message || error.message));
       }
     });
   } else {
-    // ✅ CORREGIDO: Agregar con usuario_id y cancion_id
-    this.apiServices.agregarFavorita(this.currentUser.id, cancion.id).subscribe({
+    console.log('❤️ Agregando a favoritos:', {
+      usuario_id: this.currentUser.id,
+      cancion_id: cancion.id,
+      cancion_nombre: cancion.nombre
+    });
+
+    // ✅ Validar que los IDs sean números
+    const usuarioId = Number(this.currentUser.id);
+    const cancionId = Number(cancion.id);
+
+    if (isNaN(usuarioId) || isNaN(cancionId)) {
+      console.error('❌ IDs inválidos:', { usuarioId, cancionId });
+      alert('Error: IDs inválidos');
+      return;
+    }
+
+    console.log('📤 Enviando al backend:', {
+      usuario_id: usuarioId,
+      cancion_id: cancionId
+    });
+
+    // ✅ Agregar con usuario_id y cancion_id
+    this.apiServices.agregarFavorita(usuarioId, cancionId).subscribe({
       next: (response) => {
+        console.log('✅ Respuesta del servidor (agregar):', response);
         console.log('❤️ Canción agregada a favoritos:', cancion.nombre);
         
         // Actualizar localmente con el ID devuelto
+        const insertId = response.data?.insertId || response.data || response.insertId;
+        
+        console.log('🆔 ID de favorita devuelto:', insertId);
+        
         const nuevaFavorita = {
-          id: response.data?.insertId || response.insertId, // ID de la favorita
-          cancion_id: cancion.id,
-          usuario_id: this.currentUser.id,
+          id: insertId,
+          cancion_id: cancionId,
+          usuario_id: usuarioId,
+          activo: 1,
           ...cancion
         };
         
-        this.favoritasIds.add(cancion.id);
+        console.log('📝 Nueva favorita creada:', nuevaFavorita);
+        
+        this.favoritasIds.add(cancionId);
         this.cancionesFavoritas.push(nuevaFavorita);
+        
+        console.log('📊 Estado actualizado:', {
+          total: this.cancionesFavoritas.length,
+          ids: Array.from(this.favoritasIds)
+        });
         
         this.mostrarNotificacion('Agregado a favoritos', 'success');
       },
       error: (error) => {
         console.error('❌ Error al agregar a favoritos:', error);
+        console.error('   Status:', error.status);
+        console.error('   Mensaje:', error.error?.message || error.message);
+        console.error('   Error completo:', error);
         
         if (error.status === 409 || error.status === 400) {
           alert('Esta canción ya está en tus favoritos');
+        } else if (error.status === 401) {
+          alert('No estás autenticado. Inicia sesión nuevamente.');
+          this.router.navigate(['/login']);
         } else {
-          alert('Error al agregar a favoritos');
+          alert('Error al agregar a favoritos: ' + (error.error?.message || error.message));
         }
       }
     });
   }
 }
 
-  esFavorito(cancionId: any): boolean {
-    return this.favoritasIds.has(Number(cancionId));
-  }
+esFavorito(cancionId: any): boolean {
+  const isFav = this.favoritasIds.has(Number(cancionId));
+  return isFav;
+}
 
   // ✅ OPCIONAL: Mostrar notificación temporal
   private notificacionVisible: boolean = false;
