@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { ApiServices } from '../shared/services/api-services';
 import { PlayerService } from '../shared/services/playing-service';
 import { NavbarComponent } from '../shared/components/navbar-component/navbar-component';
+import { PwaService } from '../shared/services/pwa-service';
 
 @Component({
   selector: 'app-dashboard-component',
@@ -31,12 +32,17 @@ export class DashboardComponent implements OnInit {
   qrScanning: boolean = false;
   showQRSuccess: boolean = false;
   scannedSong: any = null;
-
-  constructor(
-    private router: Router,
+    isOnline: boolean = true;
+  
+  constructor(private pwaService: PwaService, private router: Router,
     private apiServices: ApiServices,
-    private playerService: PlayerService
-  ) {}
+    private playerService: PlayerService) {
+    this.isOnline = this.pwaService.isOnline();
+    
+    window.addEventListener('online', () => this.isOnline = true);
+    window.addEventListener('offline', () => this.isOnline = false);
+  }
+
 
   ngOnInit(): void {
     console.log('🚀 Dashboard inicializado');

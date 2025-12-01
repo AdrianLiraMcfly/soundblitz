@@ -2,6 +2,8 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PlayerService, Cancion } from '../../services/playing-service';
 import { Subscription } from 'rxjs';
+import { PwaService } from './../../services/pwa-service';
+
 
 @Component({
   selector: 'app-music-player',
@@ -21,7 +23,21 @@ export class MusicPlayerComponent implements OnInit, OnDestroy {
 
   private subscriptions: Subscription[] = [];
 
-  constructor(private playerService: PlayerService) {}
+  constructor(private playerService: PlayerService, private pwaService: PwaService) {}
+
+  async reproducirCancion(cancion: any) {
+  // ... tu lógica actual ...
+  
+  // Pre-cachear el audio y la portada
+  if (cancion.url_cancion) {
+    await this.pwaService.precacheAudio(cancion.url_cancion);
+  }
+  if (cancion.url_portada) {
+    await this.pwaService.precacheImage(cancion.url_portada);
+  }
+  
+  console.log('✅ Canción cacheada para modo offline');
+  }
 
   ngOnInit(): void {
     // Suscribirse a los cambios del reproductor
@@ -43,6 +59,8 @@ export class MusicPlayerComponent implements OnInit, OnDestroy {
       })
     );
   }
+
+  
 
   ngOnDestroy(): void {
     // Limpiar suscripciones

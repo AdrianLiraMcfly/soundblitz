@@ -81,67 +81,53 @@ export class LoginComponent {
   }
 
   // Manejar login exitoso
-  private handleLoginSuccess(response: any): void {
-    try {
-      // ✅ Extraer datos del response
-      const token = response.data?.token || response.token;
-      const usuarioData = response.data?.usuario || response.usuario || response.data;
+private handleLoginSuccess(response: any): void {
+  try {
+    const token = response.data?.token || response.token;
+    const usuarioData = response.data?.usuario || response.usuario || response.data;
 
-      console.log('📋 Datos extraídos:');
-      console.log('   Token:', token ? 'Existe' : 'No existe');
-      console.log('   Usuario raw:', usuarioData);
-
-      if (!token) {
-        throw new Error('No se recibió token de autenticación');
-      }
-
-      if (!usuarioData) {
-        throw new Error('No se recibieron datos del usuario');
-      }
-
-      // ✅ Crear objeto de usuario con rol_id como NÚMERO
-      const usuario: Usuario = {
-        id: Number(usuarioData.id),
-        nombre: usuarioData.nombre || usuarioData.name || 'Usuario',
-        email: usuarioData.email || this.loginData.email,
-        rol_id: Number(usuarioData.rol_id || usuarioData.role_id || usuarioData.rol || 2)
-      };
-
-      console.log('👤 Usuario procesado:', usuario);
-      console.log('🎭 rol_id:', usuario.rol_id, 'tipo:', typeof usuario.rol_id);
-      console.log('👑 ¿Es admin?:', usuario.rol_id === 1);
-
-      // ✅ Guardar en AuthService
-      this.authService.login(usuario, token);
-
-      // Recordar usuario si está marcado
-      if (this.loginData.rememberMe) {
-        localStorage.setItem('rememberUser', 'true');
-        localStorage.setItem('userEmail', this.loginData.email.trim());
-      }
-
-      // Mostrar mensaje de éxito
-      this.showSuccessMessage(usuario);
-
-      // ✅ Redirigir según el rol
-      setTimeout(() => {
-        this.isLoading = false;
-        
-        if (usuario.rol_id === 1) {
-          console.log('🚀 Redirigiendo a panel de admin...');
-          this.router.navigate(['/dashboard']);
-        } else {
-          console.log('🚀 Redirigiendo a dashboard...');
-          this.router.navigate(['/dashboard']);
-        }
-      }, 1000);
-
-    } catch (error: any) {
-      console.error('❌ Error procesando respuesta:', error);
-      this.showErrorMessage(error.message || 'Error al procesar la respuesta del servidor');
-      this.isLoading = false;
+    if (!token || !usuarioData) {
+      throw new Error('Datos de autenticación incompletos');
     }
+
+    const usuario: Usuario = {
+      id: Number(usuarioData.id),
+      nombre: usuarioData.nombre || 'Usuario',
+      email: usuarioData.email || this.loginData.email,
+      rol_id: Number(usuarioData.rol_id || 2)
+    };
+
+    console.log('👤 Usuario procesado:', usuario);
+    console.log('🎭 rol_id:', usuario.rol_id, '👑 Es admin:', usuario.rol_id === 1);
+
+    this.authService.login(usuario, token);
+
+    if (this.loginData.rememberMe) {
+      localStorage.setItem('rememberUser', 'true');
+      localStorage.setItem('userEmail', this.loginData.email.trim());
+    }
+
+    this.showSuccessMessage(usuario);
+
+    setTimeout(() => {
+      this.isLoading = false;
+      
+      // ✅ Redirigir a /admin para administradores
+      if (usuario.rol_id === 1) {
+        console.log('🚀 Redirigiendo a panel de admin...');
+        this.router.navigate(['/admin/canciones']);
+      } else {
+        console.log('🚀 Redirigiendo a dashboard...');
+        this.router.navigate(['/dashboard']);
+      }
+    }, 1000);
+
+  } catch (error: any) {
+    console.error('❌ Error procesando respuesta:', error);
+    this.showErrorMessage(error.message || 'Error al procesar la respuesta');
+    this.isLoading = false;
   }
+}
 
   // Manejar errores de login
   private handleLoginError(error: any): void {
