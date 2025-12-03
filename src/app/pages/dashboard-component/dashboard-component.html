@@ -86,6 +86,96 @@
   </div>
 </div>
 
+<div *ngIf="showQRScanner" class="fixed inset-0 bg-black z-50 flex items-center justify-center">
+  <div class="relative w-full h-full">
+    <!-- Video de la cámara -->
+    <video #qrVideo class="w-full h-full object-cover" autoplay playsinline></video>
+    
+    <!-- Overlay con marco de escaneo -->
+    <div class="absolute inset-0 bg-black/50 flex items-center justify-center">
+      <div class="relative">
+        <!-- Marco de escaneo -->
+        <div class="w-64 h-64 border-4 border-green-500 rounded-2xl relative animate-pulse">
+          <!-- Esquinas -->
+          <div class="absolute -top-1 -left-1 w-8 h-8 border-t-4 border-l-4 border-green-400 rounded-tl-lg"></div>
+          <div class="absolute -top-1 -right-1 w-8 h-8 border-t-4 border-r-4 border-green-400 rounded-tr-lg"></div>
+          <div class="absolute -bottom-1 -left-1 w-8 h-8 border-b-4 border-l-4 border-green-400 rounded-bl-lg"></div>
+          <div class="absolute -bottom-1 -right-1 w-8 h-8 border-b-4 border-r-4 border-green-400 rounded-br-lg"></div>
+        </div>
+        
+        <!-- Instrucciones -->
+        <div class="mt-8 text-center">
+          <p class="text-white text-lg font-semibold mb-2">Escanea el código QR</p>
+          <p class="text-gray-300 text-sm">Coloca el código dentro del marco</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Botones de control -->
+    <div class="absolute top-6 left-0 right-0 flex justify-between items-center px-6 z-10">
+      <!-- Botón cerrar -->
+      <button 
+        (click)="closeQRScanner()"
+        class="w-12 h-12 bg-black/80 hover:bg-black text-white rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20 transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+
+      <!-- Botón cambiar cámara -->
+      <button 
+        (click)="switchCamera()"
+        class="w-12 h-12 bg-black/80 hover:bg-black text-white rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20 transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Estado de escaneo -->
+    <div class="absolute bottom-12 left-0 right-0 flex justify-center">
+      <div class="bg-black/80 backdrop-blur-sm px-6 py-3 rounded-full border border-white/20">
+        <div class="flex items-center space-x-3">
+          <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+          <span class="text-white font-medium">Buscando código QR...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ AGREGAR: Modal de éxito al escanear -->
+<div *ngIf="showQRSuccess && scannedSong" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-gradient-to-br from-green-900 to-green-800 rounded-2xl p-8 w-full max-w-md border-2 border-green-500 shadow-2xl text-center animate-bounce-in">
+    
+    <!-- Ícono de éxito -->
+    <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+      <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+      </svg>
+    </div>
+
+    <!-- Título -->
+    <h3 class="text-3xl font-bold text-white mb-3">¡Código escaneado!</h3>
+    
+    <!-- Info de la canción -->
+    <div class="mb-6">
+      <p class="text-green-200 text-lg font-semibold">{{ scannedSong.songName }}</p>
+      <p class="text-green-300 text-sm">{{ scannedSong.artistName }}</p>
+    </div>
+
+    <!-- Mensaje -->
+    <div class="bg-white/10 backdrop-blur-sm rounded-lg p-4 border border-green-400/30">
+      <p class="text-white text-sm">
+        <svg class="w-5 h-5 inline mr-2 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"/>
+        </svg>
+        Reproduciendo ahora...
+      </p>
+    </div>
+  </div>
+</div>
+
   <!-- Main Content -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div *ngIf="!isOnline" class="fixed top-16 left-4 right-4 md:left-8 md:right-8 mx-auto max-w-7xl bg-yellow-500 text-black text-center py-2 z-40 rounded-md shadow-md">

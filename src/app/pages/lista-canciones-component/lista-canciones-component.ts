@@ -340,4 +340,68 @@ private cargarCancionIndividual(): void {
     }
     return (palabras[0][0] + palabras[1][0]).toUpperCase();
   }
+
+  // ✅ MÉTODO PARA LIMPIAR URLs Y ELIMINAR "undefined"
+  private limpiarUrl(url: string | undefined): string {
+    if (!url || url === 'undefined' || url === 'null') {
+      return '';
+    }
+    
+    // Convertir a string y limpiar
+    let urlLimpia = String(url).trim();
+    
+    // Eliminar todas las ocurrencias de "undefined" de la URL
+    urlLimpia = urlLimpia.replace(/\/?undefined\/?/g, '/');
+    
+    // Eliminar barras duplicadas (excepto después de http://)
+    urlLimpia = urlLimpia.replace(/([^:]\/)\/+/g, '$1');
+    
+    // Eliminar barra final si existe
+    urlLimpia = urlLimpia.replace(/\/+$/, '');
+    
+    // Si la URL es relativa, construir la URL completa
+    if (!urlLimpia.startsWith('http://') && !urlLimpia.startsWith('https://')) {
+      // Si empieza con /, quitarla
+      if (urlLimpia.startsWith('/')) {
+        urlLimpia = urlLimpia.substring(1);
+      }
+      urlLimpia = `http://localhost:8085/files/${urlLimpia}`;
+    }
+    
+    console.log('🔧 URL limpiada:', urlLimpia);
+    return urlLimpia;
+  }
+
+
+  getAlbumPortada(): string {
+    // Si el álbum tiene portada propia, usarla
+    
+    
+    // Si no, buscar la primera canción que tenga portada
+    const cancionConPortada = this.canciones.find(c => c.url_portada);
+    if (cancionConPortada?.url_portada) {
+      const urlLimpia = this.limpiarUrl(cancionConPortada.url_portada);
+      if (urlLimpia) return urlLimpia;
+    }
+    
+    // Si no hay ninguna, devolver vacío para mostrar SVG predeterminado
+    return '';
+  }
+
+  // ✅ MÉTODO PARA OBTENER PORTADA DEL ARTISTA (actualizado)
+  getArtistaImagen(): string {
+    if (this.artista?.url_imagen) {
+      const urlLimpia = this.limpiarUrl(this.artista.url_imagen);
+      if (urlLimpia) return urlLimpia;
+    }
+    
+    // Buscar en las canciones del artista
+    const cancionConPortada = this.canciones.find(c => c.url_portada);
+    if (cancionConPortada?.url_portada) {
+      const urlLimpia = this.limpiarUrl(cancionConPortada.url_portada);
+      if (urlLimpia) return urlLimpia;
+    }
+    
+    return '';
+  }
 }

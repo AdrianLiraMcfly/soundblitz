@@ -40,17 +40,28 @@
       <div class="flex items-start space-x-6">
         <!-- Imagen -->
         <div class="flex-shrink-0">
-          <div *ngIf="(tipoVista === 'artista' && artista?.url_imagen) || (tipoVista === 'album' && album?.url_portada)" 
+          <!-- ✅ Para ARTISTA con imagen -->
+          <div *ngIf="tipoVista === 'artista' && getArtistaImagen()" 
                class="w-48 h-48 rounded-2xl overflow-hidden shadow-2xl">
-            <img [src]="tipoVista === 'artista' ? artista!.url_imagen : album!.url_portada" 
-                 [alt]="tipoVista === 'artista' ? artista!.nombre : album!.nombre"
+            <img [src]="getArtistaImagen()" 
+                 [alt]="artista!.nombre"
                  class="w-full h-full object-cover">
           </div>
-          <div *ngIf="(tipoVista === 'artista' && !artista?.url_imagen) || (tipoVista === 'album' && !album?.url_portada)"
-               class="w-48 h-48 rounded-2xl bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center shadow-2xl">
-            <span class="text-white text-5xl font-bold">
-              {{ getInitials(tipoVista === 'artista' ? artista!.nombre : album!.nombre) }}
-            </span>
+          
+          <!-- ✅ Para ÁLBUM con imagen -->
+          <div *ngIf="tipoVista === 'album' && getAlbumPortada()" 
+               class="w-48 h-48 rounded-2xl overflow-hidden shadow-2xl">
+            <img [src]="getAlbumPortada()" 
+                 [alt]="album!.nombre"
+                 class="w-full h-full object-cover">
+          </div>
+          
+          <!-- ✅ Imagen predeterminada SVG cuando no hay portada -->
+          <div *ngIf="(tipoVista === 'artista' && !getArtistaImagen()) || (tipoVista === 'album' && !getAlbumPortada())"
+               class="w-48 h-48 rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-gray-700 via-gray-800 to-gray-900 flex items-center justify-center">
+            <svg class="w-24 h-24 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"/>
+            </svg>
           </div>
         </div>
 
@@ -112,7 +123,9 @@
                  class="w-full h-full object-cover">
             <div *ngIf="!cancion.url_portada" 
                  class="w-full h-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center">
-              <span class="text-white text-xs font-bold">{{ getInitials(cancion.nombre) }}</span>
+              <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"/>
+              </svg>
             </div>
           </div>
 
