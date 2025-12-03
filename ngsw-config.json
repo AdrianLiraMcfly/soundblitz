@@ -34,16 +34,23 @@
     {
       "name": "api-data",
       "urls": [
-        "http://localhost:8085/api/**"
+        "http://localhost:8085/api/canciones",
+        "http://localhost:8085/api/canciones/**",
+        "http://localhost:8085/api/cancion/**",
+        "http://localhost:8085/api/artistas",
+        "http://localhost:8085/api/artistas/**",
+        "http://localhost:8085/api/artista/**",
+        "http://localhost:8085/api/albumes",
+        "http://localhost:8085/api/albumes/**",
+        "http://localhost:8085/api/album/**",
+        "http://localhost:8085/api/favoritas",
+        "http://localhost:8085/api/favoritas/**"
       ],
       "cacheConfig": {
         "maxSize": 200,
         "maxAge": "7d",
         "timeout": "5s",
         "strategy": "performance"
-      },
-      "cacheQueryOptions": {
-        "ignoreSearch": false
       }
     },
     {
@@ -57,5 +64,10 @@
         "strategy": "performance"
       }
     }
+  ],
+  "navigationUrls": [
+    "/**",
+    "!/**/*.*",
+    "!/api/**"
   ]
 }

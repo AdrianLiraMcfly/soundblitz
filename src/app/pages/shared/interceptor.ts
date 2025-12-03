@@ -6,10 +6,10 @@ import { catchError } from 'rxjs/operators';
 
 export const sessionInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem('token'); // ✅ Cambiado de 'authToken' a 'token'
 
   // ✅ Lista de rutas públicas de TU API que NO requieren token
-  const publicUrls = ['/api/login', '/api/registro', '/api/recuperar-password'];
+  const publicUrls = ['/api/login', '/api/register', '/api/registro', '/api/recuperar-password'];
   const isPublicUrl = publicUrls.some(url => req.url.includes(url));
 
   // ✅ NUEVO: Excluir APIs externas (como Deezer)
@@ -57,7 +57,7 @@ export const sessionInterceptor: HttpInterceptorFn = (req, next) => {
         console.error('❌ Sesión inválida o expirada');
         
         // Limpiar localStorage
-        localStorage.removeItem('authToken');
+        localStorage.removeItem('token'); // ✅ Cambiado de 'authToken' a 'token'
         localStorage.removeItem('user_data');
         
         // Redirigir a login
