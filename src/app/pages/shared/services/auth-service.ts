@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Router } from '@angular/router';
+import { PlayerService } from './playing-service';
 
 export interface Usuario {
   id: number;
@@ -17,7 +18,7 @@ export class AuthService {
   private currentUserSubject: BehaviorSubject<Usuario | null>;
   public currentUser$: Observable<Usuario | null>;
 
-  constructor(private router: Router) {
+  constructor(private router: Router, private playerService: PlayerService) {
     // Cargar usuario desde localStorage al iniciar
     const storedUser = localStorage.getItem('currentUser');
     this.currentUserSubject = new BehaviorSubject<Usuario | null>(
@@ -70,6 +71,8 @@ export class AuthService {
     localStorage.removeItem('currentUser');
     localStorage.removeItem('authToken');
     this.currentUserSubject.next(null);
+    this.playerService.stop();
+    this.playerService.reset();
     this.router.navigate(['/login']);
     console.log('👋 Usuario desconectado');
   }

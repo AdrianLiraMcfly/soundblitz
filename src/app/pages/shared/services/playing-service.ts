@@ -293,4 +293,19 @@ toggleMute(): void {
     this.audioElement.volume = currentVolume === 0 ? 0.7 : 0;
   }
 }
+
+reset(): void {
+  console.log('🔄 Reseteando reproductor');
+  
+  if (this.audioElement) {
+    this.audioElement.pause();
+    this.audioElement.src = '';
+    this.audioElement.currentTime = 0;
+  }
+  
+  this.currentSongSubject.next(null);
+  this.isPlayingSubject.next(false);
+  this.currentTimeSubject.next(0);
+  this.durationSubject.next(0);
+}
 }
