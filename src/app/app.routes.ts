@@ -54,7 +54,8 @@ export const routes: Routes = [
         { path: '', redirectTo: 'canciones', pathMatch: 'full' },
         { path: 'artistas', loadComponent: () => import('./pages/admin/crear-artistas-component/crear-artistas-component').then(m => m.CrearArtistasComponent) },
         { path: 'albumes', loadComponent: () => import('./pages/admin/crear-albumes-component/crear-albumes-component').then(m => m.CrearAlbumesComponent) },
-        { path: 'canciones', loadComponent: () => import('./pages/admin/crear-canciones-component/crear-canciones-component').then(m => m.CrearCancionesComponent) }
+        { path: 'canciones', loadComponent: () => import('./pages/admin/crear-canciones-component/crear-canciones-component').then(m => m.CrearCancionesComponent) },
+        { path: 'usuarios', loadComponent: () => import('./pages/admin/usuarios-component/usuarios-component').then(m => m.UsuariosComponent) }
         ]
     }
 ];

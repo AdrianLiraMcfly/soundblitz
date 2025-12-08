@@ -8,7 +8,7 @@
         </svg>
       </div>
       <h1 class="text-3xl font-bold text-white mb-2">Verifica tu código</h1>
-      <p class="text-gray-400 text-sm">Hemos enviado un código de 6 dígitos a</p>
+      <p class="text-gray-400 text-sm">Hemos enviado un código de acceso a</p>
       <p class="text-green-500 font-medium mt-1">{{ verifyData.email }}</p>
     </div>
 
@@ -36,31 +36,19 @@
           name="code"
           (input)="onCodeInput($event)"
           [disabled]="isLoading"
-          maxlength="6"
-          class="w-full px-4 py-4 rounded-lg bg-gray-800 border border-gray-700 text-white text-center text-2xl font-bold tracking-widest placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-200 disabled:opacity-50 uppercase"
-          placeholder="000000"
+          maxlength="8"
+          class="w-full px-4 py-4 rounded-lg bg-gray-800 border border-gray-700 text-white text-center text-xl font-bold tracking-wider placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition duration-200 disabled:opacity-50"
+          placeholder="Ej: awjCzMA1"
           autocomplete="off"
           required
           autofocus
         />
-        <p class="text-xs text-gray-500 text-center mt-2">Ingresa el código de 6 dígitos</p>
+        <p class="text-xs text-gray-500 text-center mt-2">Ingresa el código de 8 caracteres (distingue mayúsculas y minúsculas)</p>
       </div>
 
-      <!-- Botón de verificar -->
-      <button 
-        type="submit"
-        [disabled]="isLoading || verifyData.code.length !== 6"
-        class="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-black font-bold rounded-full transition duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center"
-      >
-        <svg *ngIf="isLoading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        {{ isLoading ? 'Verificando...' : 'Verificar código' }}
-      </button>
       <!-- ✅ Contenedor para reCAPTCHA v2 -->
       <div class="flex justify-center">
-        <div id="recaptcha-container"></div>
+        <div id="recaptcha-container-verify"></div>
       </div>
 
       <!-- ✅ Aviso de reCAPTCHA -->
@@ -71,6 +59,19 @@
         <a href="https://policies.google.com/terms" target="_blank" class="text-green-500 hover:text-green-400 underline">Términos de Servicio</a> 
         de Google.
       </div>
+
+      <!-- Botón de verificar -->
+      <button 
+        type="submit"
+        [disabled]="isLoading || verifyData.code.length !== 8"
+        class="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-black font-bold rounded-full transition duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center"
+      >
+        <svg *ngIf="isLoading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        {{ isLoading ? 'Verificando...' : 'Verificar código' }}
+      </button>
     </form>
 
     <!-- Reenviar código -->

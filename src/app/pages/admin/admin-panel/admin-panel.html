@@ -21,6 +21,20 @@
         <!-- Tabs de Navegación -->
         <div class="hidden md:flex items-center space-x-1 bg-gray-800/50 rounded-lg p-1">
           
+          <!-- Tab Usuarios -->
+          <button
+            (click)="navigateTo('usuarios')"
+            [class.bg-green-500]="activeTab === 'usuarios'"
+            [class.text-white]="activeTab === 'usuarios'"
+            [class.text-gray-400]="activeTab !== 'usuarios'"
+            [class.hover:text-white]="activeTab !== 'usuarios'"
+            class="px-4 py-2 rounded-md text-sm font-medium transition-all duration-200 flex items-center space-x-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            <span>Usuarios</span>
+          </button>
+
           <!-- Tab Artistas -->
           <button
             (click)="navigateTo('artistas')"
@@ -97,6 +111,14 @@
       <!-- Tabs Móviles -->
       <div class="md:hidden pb-3">
         <div class="flex space-x-2 overflow-x-auto">
+          <button
+            (click)="navigateTo('usuarios')"
+            [class.bg-green-500]="activeTab === 'usuarios'"
+            [class.text-white]="activeTab === 'usuarios'"
+            [class.text-gray-400]="activeTab !== 'usuarios'"
+            class="px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all duration-200">
+            Usuarios
+          </button>
           <button
             (click)="navigateTo('artistas')"
             [class.bg-green-500]="activeTab === 'artistas'"

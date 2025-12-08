@@ -55,18 +55,38 @@ export class VerifyCodeComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    // ✅ Renderizar reCAPTCHA v2
-    this.recaptchaService.waitForRecaptchaLoad()
+    // ✅ Renderizar reCAPTCHA v2 con más tiempo de espera
+    console.log('🔄 Esperando reCAPTCHA...');
+    this.recaptchaService.waitForRecaptchaLoad(15000) // 15 segundos de timeout
       .then(() => {
-        this.recaptchaWidgetId = this.recaptchaService.renderRecaptcha(
-          'recaptcha-container-verify',
-          (token) => {
-            this.recaptchaToken = token;
-            console.log('✅ reCAPTCHA v2 completado en verify-code');
+        console.log('✅ reCAPTCHA listo, intentando renderizar...');
+        
+        // ✅ Pequeño delay para asegurar que el DOM esté listo
+        setTimeout(() => {
+          const element = document.getElementById('recaptcha-container-verify');
+          if (!element) {
+            console.error('❌ Elemento recaptcha-container-verify no encontrado en el DOM');
+            return;
           }
-        );
+          
+          console.log('✅ Elemento encontrado, renderizando reCAPTCHA...');
+          this.recaptchaWidgetId = this.recaptchaService.renderRecaptcha(
+            'recaptcha-container-verify',
+            (token) => {
+              this.recaptchaToken = token;
+              console.log('✅ reCAPTCHA v2 completado en verify-code, token:', token.substring(0, 20) + '...');
+            }
+          );
+          
+          if (this.recaptchaWidgetId === null) {
+            console.error('❌ No se pudo renderizar reCAPTCHA');
+          }
+        }, 200);
       })
-      .catch(err => console.error('❌ Error cargando reCAPTCHA:', err));
+      .catch(err => {
+        console.error('❌ Error cargando reCAPTCHA:', err);
+        console.error('❌ Verifica que el script esté en index.html y que la red esté disponible');
+      });
   }
 
   ngOnDestroy(): void {
@@ -177,20 +197,6 @@ export class VerifyCodeComponent implements OnInit, AfterViewInit, OnDestroy {
     this.router.navigate(['/login']);
   }
 
-  private validateForm(): boolean {
-    if (!this.verifyData.code.trim()) {
-      this.showErrorMessage('El código es requerido');
-      return false;
-    }
-
-    if (this.verifyData.code.trim().length !== 6) {
-      this.showErrorMessage('El código debe tener 6 caracteres');
-      return false;
-    }
-
-    return true;
-  }
-
   private startCountdown(): void {
     this.countdown = 60;
     this.canResend = false;
@@ -230,10 +236,24 @@ export class VerifyCodeComponent implements OnInit, AfterViewInit, OnDestroy {
     console.log(`✅ ${message}`);
   }
 
-  onCodeInput(event: any): void {
-    const value = event.target.value;
-    if (value.length > 6) {
-      this.verifyData.code = value.substring(0, 6);
-    }
+onCodeInput(event: any): void {
+  const value = event.target.value;
+  if (value.length > 8) {
+    this.verifyData.code = value.substring(0, 8);
   }
+}
+
+private validateForm(): boolean {
+  if (!this.verifyData.code.trim()) {
+    this.showErrorMessage('El código es requerido');
+    return false;
+  }
+
+  if (this.verifyData.code.trim().length !== 8) {
+    this.showErrorMessage('El código debe tener 8 caracteres');
+    return false;
+  }
+
+  return true;
+}
 }

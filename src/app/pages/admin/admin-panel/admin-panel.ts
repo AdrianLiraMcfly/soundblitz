@@ -12,7 +12,7 @@ import { ApiServices } from '../../shared/services/api-services';
   styleUrls: ['./admin-panel.css']
 })
 export class AdminPanelComponent implements OnInit {
-  activeTab: 'artistas' | 'albumes' | 'canciones' = 'canciones';
+  activeTab: 'artistas' | 'albumes' | 'canciones' | 'usuarios' = 'canciones';
   adminNombre: string = '';
   showUserMenu: boolean = false;
 
@@ -50,11 +50,13 @@ export class AdminPanelComponent implements OnInit {
       this.activeTab = 'albumes';
     } else if (currentUrl.includes('/canciones')) {
       this.activeTab = 'canciones';
+    } else if (currentUrl.includes('/usuarios')) {
+      this.activeTab = 'usuarios';
     }
   }
 
   // Navegar entre tabs
-  navigateTo(tab: 'artistas' | 'albumes' | 'canciones'): void {
+  navigateTo(tab: 'artistas' | 'albumes' | 'canciones' | 'usuarios'): void {
     this.activeTab = tab;
     this.router.navigate([`/admin/${tab}`]);
     console.log(`📍 Navegando a: /admin/${tab}`);
