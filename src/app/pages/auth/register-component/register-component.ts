@@ -25,6 +25,8 @@ export class RegisterComponent implements OnInit, AfterViewInit, OnDestroy {
   showConfirmPassword = false;
   errorMessage = '';
   showError = false;
+  showSuccess = false;
+  successMessage = '';
   
   // ✅ Para reCAPTCHA v2
   private recaptchaWidgetId: number | null = null;
@@ -73,11 +75,14 @@ export class RegisterComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.isLoading = true;
     this.hideError();
+    this.hideSuccess();
 
+    // ✅ Formato según la API del backend: {nombre, email, password, rol}
     const userData = {
       nombre: this.registerData.nombre.trim(),
       email: this.registerData.email.trim(),
       password: this.registerData.password,
+      rol: 2, // ✅ Usuario regular (no administrador)
       recaptchaToken: this.recaptchaToken
     };
 
@@ -101,9 +106,17 @@ export class RegisterComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private handleRegisterSuccess(): void {
     this.isLoading = false;
-    this.router.navigate(['/login'], {
-      state: { message: 'Registro exitoso. Por favor, inicia sesión.' }
-    });
+    this.showSuccessMessage('¡Registro exitoso! Redirigiendo al login...');
+    
+    // Esperar 2 segundos antes de redirigir
+    setTimeout(() => {
+      this.router.navigate(['/login'], {
+        state: { 
+          email: this.registerData.email,
+          message: 'Registro exitoso. Por favor, inicia sesión.' 
+        }
+      });
+    }, 2000);
   }
 
   private handleRegisterError(error: any): void {
@@ -121,11 +134,18 @@ export class RegisterComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private validateForm(): boolean {
+    // Validar nombre (mínimo 3 caracteres)
     if (!this.registerData.nombre.trim()) {
       this.showErrorMessage('El nombre es requerido');
       return false;
     }
 
+    if (this.registerData.nombre.trim().length < 3) {
+      this.showErrorMessage('El nombre debe tener al menos 3 caracteres');
+      return false;
+    }
+
+    // Validar email
     if (!this.registerData.email.trim()) {
       this.showErrorMessage('El email es requerido');
       return false;
@@ -136,6 +156,7 @@ export class RegisterComponent implements OnInit, AfterViewInit, OnDestroy {
       return false;
     }
 
+    // Validar contraseña (mínimo 6 caracteres, al menos una letra y un número)
     if (!this.registerData.password) {
       this.showErrorMessage('La contraseña es requerida');
       return false;
@@ -146,6 +167,12 @@ export class RegisterComponent implements OnInit, AfterViewInit, OnDestroy {
       return false;
     }
 
+    if (!this.isValidPassword(this.registerData.password)) {
+      this.showErrorMessage('La contraseña debe contener al menos una letra y un número');
+      return false;
+    }
+
+    // Validar coincidencia de contraseñas
     if (this.registerData.password !== this.registerData.confirmPassword) {
       this.showErrorMessage('Las contraseñas no coinciden');
       return false;
@@ -157,6 +184,13 @@ export class RegisterComponent implements OnInit, AfterViewInit, OnDestroy {
   private isValidEmail(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+  }
+
+  private isValidPassword(password: string): boolean {
+    // Al menos una letra y un número
+    const hasLetter = /[a-zA-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    return hasLetter && hasNumber;
   }
 
   togglePasswordVisibility(): void {
@@ -183,5 +217,15 @@ export class RegisterComponent implements OnInit, AfterViewInit, OnDestroy {
   private hideError(): void {
     this.showError = false;
     this.errorMessage = '';
+  }
+
+  private showSuccessMessage(message: string): void {
+    this.successMessage = message;
+    this.showSuccess = true;
+  }
+
+  private hideSuccess(): void {
+    this.showSuccess = false;
+    this.successMessage = '';
   }
 }
