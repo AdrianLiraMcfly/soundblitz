@@ -5,7 +5,7 @@
   </app-navbar>
     <!-- ✅ Notificación Toast -->
   <div *ngIf="notificacion.visible" 
-       class="fixed top-20 right-4 z-50 animate-slide-in">
+      class="fixed top-20 right-4 z-50 animate-slide-in">
     <div [class]="'px-4 py-3 rounded-lg shadow-lg flex items-center space-x-3 ' + 
                   (notificacion.tipo === 'success' ? 'bg-green-600' : 'bg-red-600') + ' text-white'">
       <svg *ngIf="notificacion.tipo === 'success'" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

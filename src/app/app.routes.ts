@@ -20,7 +20,11 @@ export const routes: Routes = [
         canActivate: [guestGuard],
         loadComponent: () => import('./pages/auth/register-component/register-component').then(m => m.RegisterComponent)
     },
-
+    {
+    path: 'verify-code',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./pages/auth/verify-code-component/verify-code-component').then(m => m.VerifyCodeComponent)
+    },
     {
         path: 'dashboard',
         canActivate: [authGuard, userGuard],

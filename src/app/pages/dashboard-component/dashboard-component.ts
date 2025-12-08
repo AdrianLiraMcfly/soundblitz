@@ -542,148 +542,275 @@ export class DashboardComponent implements OnInit {
   // ✅ MÉTODOS PARA ESCANEAR QR
   // ========================================
 
-  async openQRScanner(): Promise<void> {
-    console.log('📷 Abriendo escáner QR...');
-    this.showQRScanner = true;
-    
-    setTimeout(() => {
-      this.startQRScanner();
-    }, 100);
+async openQRScanner(): Promise<void> {
+  console.log('📷 Abriendo escáner QR...');
+  
+  // Verificar si hay soporte de cámara
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    console.error('❌ getUserMedia no soportado');
+    this.mostrarNotificacion('Tu dispositivo no soporta acceso a la cámara', 'error');
+    return;
   }
 
-  private async startQRScanner(): Promise<void> {
-    try {
-      console.log('📷 Iniciando escáner QR...');
-      
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: this.currentFacingMode,
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      });
+  this.showQRScanner = true;
+  
+  // ✅ Esperar a que el DOM esté listo
+  setTimeout(() => {
+    this.startQRScanner();
+  }, 300);
+}
 
-      if (this.qrVideo?.nativeElement) {
-        this.qrVideo.nativeElement.srcObject = this.stream;
-        this.qrVideo.nativeElement.play();
-        
-        console.log('✅ Cámara iniciada');
-        this.qrScanning = true;
-        
-        this.scanQRCode();
-      }
-    } catch (error) {
-      console.error('❌ Error al iniciar cámara:', error);
-      this.mostrarNotificacion('No se pudo acceder a la cámara', 'error');
-      this.closeQRScanner();
-    }
-  }
+private async startQRScanner(): Promise<void> {
+  try {
+    console.log('📷 Solicitando acceso a la cámara...');
 
-  private scanQRCode(): void {
-    if (!this.qrVideo?.nativeElement || !this.qrScanning) {
+    // ✅ Configuración optimizada para móviles
+    const constraints: MediaStreamConstraints = {
+      video: {
+        facingMode: this.currentFacingMode,
+        width: { ideal: 1920, max: 1920 },
+        height: { ideal: 1080, max: 1080 }
+      },
+      audio: false
+    };
+
+    console.log('🎥 Constraints:', constraints);
+
+    // Solicitar acceso a la cámara
+    this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+
+    console.log('✅ Acceso a cámara concedido');
+
+    if (!this.qrVideo?.nativeElement) {
+      console.error('❌ Elemento de video no encontrado');
+      this.stopStream();
       return;
     }
 
     const video = this.qrVideo.nativeElement;
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
+    
+    // ✅ Configurar video para móviles
+    video.setAttribute('playsinline', 'true');
+    video.setAttribute('autoplay', 'true');
+    video.muted = true;
+    
+    video.srcObject = this.stream;
 
-    if (!context) return;
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    const scan = () => {
-      if (!this.qrScanning) return;
-
-      if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        
-        const code = jsQR(imageData.data, imageData.width, imageData.height, {
-          inversionAttempts: 'dontInvert'
+    // ✅ Esperar a que el video esté listo
+    await new Promise<void>((resolve, reject) => {
+      video.onloadedmetadata = () => {
+        console.log('📹 Metadata cargada:', {
+          width: video.videoWidth,
+          height: video.videoHeight
         });
+        resolve();
+      };
+      
+      video.onerror = (error) => {
+        console.error('❌ Error en video:', error);
+        reject(error);
+      };
 
-        if (code) {
-          console.log('📱 QR detectado:', code.data);
-          this.handleQRDetected(code.data);
-          return;
-        }
-      }
+      // Timeout de seguridad
+      setTimeout(() => reject(new Error('Timeout cargando video')), 5000);
+    });
 
-      this.animationFrameId = requestAnimationFrame(scan);
-    };
+    await video.play();
+    console.log('▶️ Video reproduciendo');
 
-    scan();
+    this.qrScanning = true;
+    this.scanQRCode();
+
+  } catch (error: any) {
+    console.error('❌ Error al iniciar cámara:', error);
+    
+    let errorMsg = 'No se pudo acceder a la cámara';
+    
+    if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+      errorMsg = 'Permiso de cámara denegado. Por favor, habilita el acceso en la configuración.';
+    } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+      errorMsg = 'No se encontró ninguna cámara en tu dispositivo';
+    } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+      errorMsg = 'La cámara está siendo usada por otra aplicación';
+    } else if (error.name === 'OverconstrainedError' || error.name === 'ConstraintNotSatisfiedError') {
+      errorMsg = 'La cámara no cumple con los requisitos necesarios';
+    }
+    
+    this.mostrarNotificacion(errorMsg, 'error');
+    this.closeQRScanner();
+  }
+}
+
+private scanQRCode(): void {
+  if (!this.qrVideo?.nativeElement || !this.qrScanning) {
+    console.warn('⚠️ Escaneo cancelado - video o flag no disponible');
+    return;
   }
 
-  private handleQRDetected(qrData: string): void {
-    const songData = this.qrService.parseSongQR(qrData);
+  const video = this.qrVideo.nativeElement;
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d', { willReadFrequently: true });
 
-    if (!songData) {
-      console.warn('⚠️ QR no válido');
-      this.mostrarNotificacion('Este QR no es de SoundBlitz', 'error');
+  if (!context) {
+    console.error('❌ No se pudo crear contexto 2D');
+    return;
+  }
+
+  let frameCount = 0;
+
+  const scan = () => {
+    if (!this.qrScanning || !video.srcObject) {
+      console.log('🛑 Escaneo detenido');
       return;
     }
 
-    console.log('✅ Canción detectada:', songData);
-    
-    this.scannedSong = songData;
-    this.showQRSuccess = true;
-    
-    this.closeQRScanner();
+    try {
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        // ✅ Actualizar tamaño del canvas
+        if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          console.log('📐 Canvas redimensionado:', canvas.width, 'x', canvas.height);
+        }
 
+        // ✅ Dibujar frame actual
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        
+        // ✅ Intentar detectar QR (cada 5 frames para mejor rendimiento)
+        if (frameCount % 5 === 0) {
+          const code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: 'dontInvert'
+          });
+
+          if (code) {
+            console.log('📱 QR detectado:', code.data);
+            this.handleQRDetected(code.data);
+            return; // ✅ Detener escaneo al encontrar código
+          }
+        }
+
+        frameCount++;
+      }
+    } catch (error) {
+      console.error('❌ Error en escaneo:', error);
+    }
+
+    // ✅ Continuar escaneando
+    this.animationFrameId = requestAnimationFrame(scan);
+  };
+
+  console.log('🔍 Iniciando bucle de escaneo...');
+  scan();
+}
+
+private handleQRDetected(qrData: string): void {
+  console.log('🎯 Procesando QR detectado:', qrData);
+  
+  const songData = this.qrService.parseSongQR(qrData);
+
+  if (!songData) {
+    console.warn('⚠️ QR no válido para SoundBlitz');
+    this.mostrarNotificacion('Este QR no es válido para SoundBlitz', 'error');
+    
+    // ✅ No cerrar el escáner, permitir seguir escaneando
     setTimeout(() => {
-      this.reproducirCancionPorId(songData.songId);
-      
-      setTimeout(() => {
-        this.showQRSuccess = false;
-        this.scannedSong = null;
-      }, 3000);
-    }, 1000);
+      if (this.qrScanning) {
+        console.log('🔄 Listo para escanear nuevamente');
+      }
+    }, 2000);
+    return;
   }
 
-  private reproducirCancionPorId(cancionId: number): void {
-    const cancion = this.canciones.find(c => c.id === cancionId);
-    
-    if (cancion) {
-      console.log('🎵 Reproduciendo canción escaneada:', cancion.nombre);
-      this.reproducirCancion(cancion);
-      this.mostrarNotificacion(`Reproduciendo: ${cancion.nombre}`, 'success');
-    } else {
-      console.error('❌ Canción no encontrada en la lista');
-      this.mostrarNotificacion('No se encontró la canción en tu biblioteca', 'error');
-    }
-  }
+  console.log('✅ Canción detectada:', songData);
+  
+  // ✅ Detener escaneo
+  this.qrScanning = false;
+  
+  this.scannedSong = songData;
+  this.showQRSuccess = true;
+  
+  // ✅ Cerrar escáner
+  this.closeQRScanner();
 
-  closeQRScanner(): void {
-    console.log('🔒 Cerrando escáner...');
-    this.showQRScanner = false;
-    this.qrScanning = false;
-
-    if (this.animationFrameId) {
-      cancelAnimationFrame(this.animationFrameId);
-      this.animationFrameId = null;
-    }
-
-    if (this.stream) {
-      this.stream.getTracks().forEach(track => track.stop());
-      this.stream = null;
-    }
-
-    console.log('✅ Escáner cerrado');
-  }
-
-  async switchCamera(): Promise<void> {
-    console.log('🔄 Cambiando cámara...');
-    this.currentFacingMode = this.currentFacingMode === 'user' ? 'environment' : 'user';
-    
-    this.closeQRScanner();
+  // ✅ Reproducir canción después de mostrar animación
+  setTimeout(() => {
+    this.reproducirCancionPorId(songData.songId);
     
     setTimeout(() => {
-      this.startQRScanner();
-    }, 300);
+      this.showQRSuccess = false;
+      this.scannedSong = null;
+    }, 3000);
+  }, 1000);
+}
+
+private reproducirCancionPorId(cancionId: number): void {
+  const cancion = this.canciones.find(c => c.id === cancionId);
+  
+  if (cancion) {
+    console.log('🎵 Reproduciendo canción escaneada:', cancion.nombre);
+    this.reproducirCancion(cancion);
+    this.mostrarNotificacion(`Reproduciendo: ${cancion.nombre}`, 'success');
+  } else {
+    console.error('❌ Canción no encontrada en la lista');
+    this.mostrarNotificacion('No se encontró la canción en tu biblioteca', 'error');
   }
+}
+
+closeQRScanner(): void {
+  console.log('🔒 Cerrando escáner QR...');
+  
+  this.showQRScanner = false;
+  this.qrScanning = false;
+
+  // ✅ Cancelar animación
+  if (this.animationFrameId !== null) {
+    cancelAnimationFrame(this.animationFrameId);
+    this.animationFrameId = null;
+  }
+
+  // ✅ Detener stream
+  this.stopStream();
+
+  console.log('✅ Escáner cerrado completamente');
+}
+private stopStream(): void {
+  if (this.stream) {
+    console.log('📴 Deteniendo stream de cámara...');
+    this.stream.getTracks().forEach(track => {
+      track.stop();
+      console.log('🛑 Track detenido:', track.kind);
+    });
+    this.stream = null;
+  }
+
+  // ✅ Limpiar video element
+  if (this.qrVideo?.nativeElement) {
+    this.qrVideo.nativeElement.srcObject = null;
+  }
+}
+
+async switchCamera(): Promise<void> {
+  console.log('🔄 Cambiando cámara...');
+  
+  // ✅ Cambiar modo
+  this.currentFacingMode = this.currentFacingMode === 'user' ? 'environment' : 'user';
+  console.log('📷 Nuevo modo:', this.currentFacingMode);
+  
+  // ✅ Detener cámara actual
+  this.qrScanning = false;
+  this.stopStream();
+  
+  // ✅ Pequeña pausa para que el navegador libere la cámara
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  // ✅ Iniciar nueva cámara
+  this.startQRScanner();
+}
+ngOnDestroy(): void {
+  console.log('🧹 Limpiando componente dashboard...');
+  this.closeQRScanner();
+}
 
   getInitials(nombre: string): string {
     if (!nombre) return '?';

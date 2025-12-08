@@ -1,0 +1,22 @@
+/* Animación para el input cuando se enfoca */
+input[type="text"]:focus {
+  animation: pulse-border 0.5s ease-in-out;
+}
+
+@keyframes pulse-border {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+/* Estilos para números en el input */
+input[type="text"] {
+  letter-spacing: 0.5em;
+  font-variant-numeric: tabular-nums;
+}

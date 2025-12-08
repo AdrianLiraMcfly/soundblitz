@@ -102,3 +102,39 @@
   .animate-bounce-in {
     animation: bounce-in 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   }
+  /* Optimización para escáner QR en móviles */
+video {
+  object-fit: cover;
+  transform: scaleX(-1); /* Espejo horizontal */
+}
+
+@media (max-width: 768px) {
+  #qrVideo {
+    width: 100%;
+    height: 100%;
+  }
+  
+  /* Ajustar marco de escaneo para móviles */
+  .w-64 {
+    width: 80vw !important;
+    height: 80vw !important;
+    max-width: 300px;
+    max-height: 300px;
+  }
+}
+
+/* Animación para entrada del modal */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}

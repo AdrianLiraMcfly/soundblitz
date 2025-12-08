@@ -4,10 +4,11 @@
   "theme_color": "#10b981",
   "background_color": "#000000",
   "display": "standalone",
+  "permissions": ["camera"],
+  "orientation":"portrait",
   "scope": "./",
   "start_url": "./",
   "description": "Plataforma de música en streaming",
-  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "icons/icon-72x72.png",

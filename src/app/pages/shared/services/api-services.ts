@@ -74,6 +74,11 @@ export class ApiServices {
     return this.http.post(`${this.apiUrl}/usuarios/login`, credentials);
   }
 
+// Reemplazar el método validarCode en api-services.ts:
+validarCode(code: string, email: string): Observable<any> {
+  return this.http.post(`${this.apiUrl}/usuarios/validar_code`, { code, email });
+}
+
   // ===== CANCIONES =====
   // GET /api/canciones - Obtener todas las canciones
   getCanciones(): Observable<any> {

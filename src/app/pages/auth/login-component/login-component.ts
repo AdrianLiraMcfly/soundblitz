@@ -1,42 +1,73 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ApiServices } from '../../shared/services/api-services';
 import { AuthService, Usuario } from '../../shared/services/auth-service';
+import { RecaptchaService } from '../../shared/services/recaptcha-service';
 
 @Component({
   selector: 'app-login-component',
+  standalone: true,
   imports: [FormsModule, CommonModule],
   templateUrl: './login-component.html',
   styleUrl: './login-component.css'
 })
-export class LoginComponent {
-  // Datos del formulario
+export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
   loginData = {
     email: '',
     password: '',
     rememberMe: false
   };
 
-  // Estados del componente
   isLoading = false;
   showPassword = false;
   errorMessage = '';
   showError = false;
+  
+  // ✅ Para reCAPTCHA v2
+  private recaptchaWidgetId: number | null = null;
+  private recaptchaToken: string = '';
 
   constructor(
     private router: Router,
     private apiServices: ApiServices,
-    private authService: AuthService
+    private authService: AuthService,
+    private recaptchaService: RecaptchaService
   ) {}
 
   ngOnInit(): void {
-    // Verificar si ya está logueado
     this.checkExistingAuth();
   }
 
-  // Verificar si ya hay una sesión activa
+  ngAfterViewInit(): void {
+    // ✅ Renderizar reCAPTCHA v2 después de que la vista esté lista
+    this.recaptchaService.waitForRecaptchaLoad()
+      .then(() => {
+        this.recaptchaWidgetId = this.recaptchaService.renderRecaptcha(
+          'recaptcha-container',
+          (token) => {
+            this.recaptchaToken = token;
+            console.log('✅ reCAPTCHA v2 completado');
+          }
+        );
+      })
+      .catch(err => console.error('❌ Error cargando reCAPTCHA:', err));
+
+    // Auto-completar email si se guardó
+    const rememberUser = localStorage.getItem('rememberUser');
+    const savedEmail = localStorage.getItem('userEmail');
+    
+    if (rememberUser === 'true' && savedEmail) {
+      this.loginData.email = savedEmail;
+      this.loginData.rememberMe = true;
+    }
+  }
+
+  ngOnDestroy(): void {
+    // Limpiar si es necesario
+  }
+
   private checkExistingAuth(): void {
     if (this.authService.isAuthenticated()) {
       console.log('✅ Usuario ya autenticado, redirigiendo...');
@@ -50,9 +81,14 @@ export class LoginComponent {
     }
   }
 
-  // Método para manejar el login
+  // ✅ Login con validación de reCAPTCHA v2
   onLogin(): void {
-    // Validar campos
+    // Validar reCAPTCHA
+    if (!this.recaptchaToken) {
+      this.showErrorMessage('Por favor, completa el reCAPTCHA');
+      return;
+    }
+
     if (!this.validateForm()) {
       return;
     }
@@ -62,7 +98,8 @@ export class LoginComponent {
 
     const credentials = {
       email: this.loginData.email.trim(),
-      password: this.loginData.password
+      password: this.loginData.password,
+      recaptchaToken: this.recaptchaToken
     };
 
     console.log('🔐 Intentando login con:', credentials.email);
@@ -76,60 +113,35 @@ export class LoginComponent {
         console.error('❌ Error en login:', error);
         this.handleLoginError(error);
         this.isLoading = false;
+        // ✅ Resetear reCAPTCHA después de error
+        this.recaptchaService.resetRecaptcha(this.recaptchaWidgetId);
+        this.recaptchaToken = '';
       },
     });
   }
 
-  // Manejar login exitoso
-private handleLoginSuccess(response: any): void {
-  try {
-    const token = response.data?.token || response.token;
-    const usuarioData = response.data?.usuario || response.usuario || response.data;
-
-    if (!token || !usuarioData) {
-      throw new Error('Datos de autenticación incompletos');
-    }
-
-    const usuario: Usuario = {
-      id: Number(usuarioData.id),
-      nombre: usuarioData.nombre || 'Usuario',
-      email: usuarioData.email || this.loginData.email,
-      rol_id: Number(usuarioData.rol_id || 2)
-    };
-
-    console.log('👤 Usuario procesado:', usuario);
-    console.log('🎭 rol_id:', usuario.rol_id, '👑 Es admin:', usuario.rol_id === 1);
-
-    this.authService.login(usuario, token);
-
-    if (this.loginData.rememberMe) {
-      localStorage.setItem('rememberUser', 'true');
-      localStorage.setItem('userEmail', this.loginData.email.trim());
-    }
-
-    this.showSuccessMessage(usuario);
-
-    setTimeout(() => {
-      this.isLoading = false;
+  private handleLoginSuccess(response: any): void {
+    try {
+      console.log('✅ Credenciales correctas, código enviado por email');
       
-      // ✅ Redirigir a /admin para administradores
-      if (usuario.rol_id === 1) {
-        console.log('🚀 Redirigiendo a panel de admin...');
-        this.router.navigate(['/admin/canciones']);
-      } else {
-        console.log('🚀 Redirigiendo a dashboard...');
-        this.router.navigate(['/dashboard']);
+      if (this.loginData.rememberMe) {
+        localStorage.setItem('rememberUser', 'true');
+        localStorage.setItem('userEmail', this.loginData.email.trim());
       }
-    }, 1000);
 
-  } catch (error: any) {
-    console.error('❌ Error procesando respuesta:', error);
-    this.showErrorMessage(error.message || 'Error al procesar la respuesta');
-    this.isLoading = false;
+      this.isLoading = false;
+
+      this.router.navigate(['/verify-code'], {
+        state: { email: this.loginData.email.trim() }
+      });
+
+    } catch (error: any) {
+      console.error('❌ Error procesando respuesta:', error);
+      this.showErrorMessage(error.message || 'Error al procesar la respuesta');
+      this.isLoading = false;
+    }
   }
-}
 
-  // Manejar errores de login
   private handleLoginError(error: any): void {
     let errorMsg = 'Error al iniciar sesión';
 
@@ -148,7 +160,6 @@ private handleLoginSuccess(response: any): void {
     this.showErrorMessage(errorMsg);
   }
 
-  // Validar formulario
   private validateForm(): boolean {
     if (!this.loginData.email.trim()) {
       this.showErrorMessage('El email es requerido');
@@ -173,33 +184,27 @@ private handleLoginSuccess(response: any): void {
     return true;
   }
 
-  // Validar formato de email
   private isValidEmail(email: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   }
 
-  // Mostrar/ocultar contraseña
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
   }
 
-  // Navegación al registro
   goRegister(): void {
     this.router.navigate(['/register']);
   }
 
-  // Navegación a recuperar contraseña
   goForgotPassword(): void {
     this.router.navigate(['/forgot-password']);
   }
 
-  // Métodos para manejar mensajes
   private showErrorMessage(message: string): void {
     this.errorMessage = message;
     this.showError = true;
 
-    // Ocultar mensaje después de 5 segundos
     setTimeout(() => {
       this.hideError();
     }, 5000);
@@ -208,22 +213,5 @@ private handleLoginSuccess(response: any): void {
   private hideError(): void {
     this.showError = false;
     this.errorMessage = '';
-  }
-
-  private showSuccessMessage(usuario: Usuario): void {
-    const rolText = usuario.rol_id === 1 ? 'Administrador' : 'Usuario';
-    console.log(`✅ Bienvenido ${usuario.nombre} (${rolText})`);
-  }
-
-
-  // Auto-completar email si se recordó al usuario
-  ngAfterViewInit(): void {
-    const rememberUser = localStorage.getItem('rememberUser');
-    const savedEmail = localStorage.getItem('userEmail');
-    
-    if (rememberUser === 'true' && savedEmail) {
-      this.loginData.email = savedEmail;
-      this.loginData.rememberMe = true;
-    }
   }
 }
