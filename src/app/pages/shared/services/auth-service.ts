@@ -103,4 +103,11 @@ export class AuthService {
     // Verificar rol específico
     return userRole === requiredRole;
   }
+
+  saveAuthData(token: string, user: Usuario): void {
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    this.currentUserSubject.next(user);
+  }
+
 }

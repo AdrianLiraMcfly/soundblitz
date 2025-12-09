@@ -1,3 +1,4 @@
+// src/app/pages/auth/login-component/login-component.ts - ACTUALIZADO
 import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -5,6 +6,8 @@ import { CommonModule } from '@angular/common';
 import { ApiServices } from '../../shared/services/api-services';
 import { AuthService, Usuario } from '../../shared/services/auth-service';
 import { RecaptchaService } from '../../shared/services/recaptcha-service';
+import { PwaInstallService } from '../../shared/services/pwa-install.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-login-component',
@@ -25,7 +28,14 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
   errorMessage = '';
   showError = false;
   
-  // ✅ Para reCAPTCHA v2
+  // PWA Installation
+  showInstallPrompt = false;
+  isInstallingPWA = false;
+  platformInfo: any = {};
+  showIOSInstructions = false;
+  private installSubscription?: Subscription;
+  
+  // reCAPTCHA
   private recaptchaWidgetId: number | null = null;
   private recaptchaToken: string = '';
 
@@ -33,27 +43,26 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
     private router: Router,
     private apiServices: ApiServices,
     private authService: AuthService,
-    private recaptchaService: RecaptchaService
+    private recaptchaService: RecaptchaService,
+    private pwaInstallService: PwaInstallService
   ) {}
 
   ngOnInit(): void {
     this.checkExistingAuth();
+    this.checkPWAInstallability();
   }
 
   ngAfterViewInit(): void {
-    // ✅ Renderizar reCAPTCHA v2 después de que la vista esté lista
     this.recaptchaService.waitForRecaptchaLoad()
       .then(() => {
         this.recaptchaWidgetId = this.recaptchaService.renderRecaptcha(
           'recaptcha-container',
           (token) => {
             this.recaptchaToken = token;
-            //console.log('✅ reCAPTCHA v2 completado');
           }
         );
-      })
+      });
 
-    // Auto-completar email si se guardó
     const rememberUser = localStorage.getItem('rememberUser');
     const savedEmail = localStorage.getItem('userEmail');
     
@@ -64,12 +73,11 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    // Limpiar si es necesario
+    this.installSubscription?.unsubscribe();
   }
 
   private checkExistingAuth(): void {
     if (this.authService.isAuthenticated()) {
-      //console.log('✅ Usuario ya autenticado, redirigiendo...');
       const isAdmin = this.authService.isAdmin();
       
       if (isAdmin) {
@@ -80,9 +88,53 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  // ✅ Login con validación de reCAPTCHA v2
+  private checkPWAInstallability(): void {
+    this.platformInfo = this.pwaInstallService.getPlatformInfo();
+    this.showInstallPrompt = this.pwaInstallService.shouldShowInstallButton();
+
+    // Suscribirse a cambios en la disponibilidad de instalación
+    this.installSubscription = this.pwaInstallService.canInstall.subscribe(canInstall => {
+      if (canInstall && this.platformInfo.isAndroid) {
+        this.showInstallPrompt = true;
+      }
+    });
+
+    //console.log('PWA Info:', this.platformInfo, 'Show Install:', this.showInstallPrompt);
+  }
+
+  async installPWA(): Promise<void> {
+    // Para iOS, mostrar instrucciones
+    if (this.platformInfo.isIOS) {
+      this.showIOSInstructions = true;
+      return;
+    }
+
+    // Para Android con prompt nativo
+    if (this.platformInfo.isAndroid && this.platformInfo.canInstall) {
+      this.isInstallingPWA = true;
+      const installed = await this.pwaInstallService.promptInstall();
+      
+      if (installed) {
+        this.showInstallPrompt = false;
+        setTimeout(() => {
+          alert('SoundBlitz instalado correctamente\n\nPuedes encontrar la aplicación en tu pantalla de inicio.');
+        }, 1000);
+      }
+      
+      this.isInstallingPWA = false;
+    }
+  }
+
+  closeIOSInstructions(): void {
+    this.showIOSInstructions = false;
+  }
+
+  dismissInstallPrompt(): void {
+    this.showInstallPrompt = false;
+    localStorage.setItem('pwa-install-dismissed', 'true');
+  }
+
   onLogin(): void {
-    // Validar reCAPTCHA
     if (!this.recaptchaToken) {
       this.showErrorMessage('Por favor, completa el reCAPTCHA');
       return;
@@ -101,77 +153,52 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
       recaptchaToken: this.recaptchaToken
     };
 
-    //console.log('🔐 Intentando login con:', credentials.email);
-
     this.apiServices.login(credentials).subscribe({
       next: (response) => {
-        //console.log('📥 Respuesta del servidor:', response);
-        this.handleLoginSuccess(response);
+        if (response.success) {
+          const userData = response.data.user;
+          const token = response.data.token;
+
+          this.authService.saveAuthData(token, userData);
+
+          if (this.loginData.rememberMe) {
+            localStorage.setItem('rememberUser', 'true');
+            localStorage.setItem('userEmail', this.loginData.email);
+          } else {
+            localStorage.removeItem('rememberUser');
+            localStorage.removeItem('userEmail');
+          }
+
+          const isAdmin = userData.roles?.some((role: any) => role.nombre === 'Admin');
+          
+          if (isAdmin) {
+            this.router.navigate(['/admin/canciones']);
+          } else {
+            this.router.navigate(['/dashboard']);
+          }
+        } else {
+          this.showErrorMessage(response.message || 'Error al iniciar sesión');
+          this.resetRecaptcha();
+        }
+        this.isLoading = false;
       },
       error: (error) => {
-        //console.error('❌ Error en login:', error);
-        this.handleLoginError(error);
+        const errorMsg = error.error?.message || 'Error de conexión. Inténtalo de nuevo.';
+        this.showErrorMessage(errorMsg);
+        this.resetRecaptcha();
         this.isLoading = false;
-        // ✅ Resetear reCAPTCHA después de error
-        this.recaptchaService.resetRecaptcha(this.recaptchaWidgetId);
-        this.recaptchaToken = '';
-      },
-    });
-  }
-
-  private handleLoginSuccess(response: any): void {
-    try {
-      //console.log('✅ Credenciales correctas, código enviado por email');
-      
-      if (this.loginData.rememberMe) {
-        localStorage.setItem('rememberUser', 'true');
-        localStorage.setItem('userEmail', this.loginData.email.trim());
       }
-
-      this.isLoading = false;
-
-      this.router.navigate(['/verify-code'], {
-        state: { email: this.loginData.email.trim() }
-      });
-
-    } catch (error: any) {
-      console.error('❌ Error procesando respuesta:', error);
-      this.showErrorMessage(error.message || 'Error al procesar la respuesta');
-      this.isLoading = false;
-    }
-  }
-
-  private handleLoginError(error: any): void {
-    let errorMsg = 'Error al iniciar sesión';
-
-    if (error.status === 401) {
-      errorMsg = 'Email o contraseña incorrectos';
-    } else if (error.status === 404) {
-      errorMsg = 'Usuario no encontrado';
-    } else if (error.status === 403) {
-      errorMsg = 'Cuenta bloqueada o inactiva';
-    } else if (error.status === 0) {
-      errorMsg = 'Error de conexión. Verifica tu internet';
-    } else if (error.error?.message) {
-      errorMsg = error.error.message;
-    }
-
-    this.showErrorMessage(errorMsg);
+    });
   }
 
   private validateForm(): boolean {
     if (!this.loginData.email.trim()) {
-      this.showErrorMessage('El email es requerido');
+      this.showErrorMessage('Por favor, introduce tu email o nombre de usuario');
       return false;
     }
 
-    if (!this.loginData.password.trim()) {
-      this.showErrorMessage('La contraseña es requerida');
-      return false;
-    }
-
-    if (this.loginData.email.includes('@') && !this.isValidEmail(this.loginData.email)) {
-      this.showErrorMessage('El formato del email no es válido');
+    if (!this.loginData.password) {
+      this.showErrorMessage('Por favor, introduce tu contraseña');
       return false;
     }
 
@@ -183,13 +210,25 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
     return true;
   }
 
-  private isValidEmail(email: string): boolean {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+  private resetRecaptcha(): void {
+    if (this.recaptchaWidgetId !== null) {
+      this.recaptchaService.resetRecaptcha(this.recaptchaWidgetId);
+      this.recaptchaToken = '';
+    }
   }
 
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
+  }
+
+  private showErrorMessage(message: string): void {
+    this.errorMessage = message;
+    this.showError = true;
+    setTimeout(() => this.hideError(), 5000);
+  }
+
+  private hideError(): void {
+    this.showError = false;
   }
 
   goRegister(): void {
@@ -197,20 +236,6 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   goForgotPassword(): void {
-    this.router.navigate(['/forgot-password']);
-  }
-
-  private showErrorMessage(message: string): void {
-    this.errorMessage = message;
-    this.showError = true;
-
-    setTimeout(() => {
-      this.hideError();
-    }, 5000);
-  }
-
-  private hideError(): void {
-    this.showError = false;
-    this.errorMessage = '';
+    alert('Funcionalidad de recuperación de contraseña en desarrollo');
   }
 }

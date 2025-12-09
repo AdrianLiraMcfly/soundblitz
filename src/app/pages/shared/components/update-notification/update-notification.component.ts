@@ -1,4 +1,4 @@
-// src/app/pages/shared/components/update-notification/update-notification.component.ts
+// src/app/pages/shared/components/update-notification/update-notification.component.ts - ACTUALIZADO
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UpdateNotificationService } from '../../services/update-notification.service';
@@ -10,12 +10,12 @@ import { Subscription, interval } from 'rxjs';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div *ngIf="showUpdateBanner" 
+    <!-- Banner de actualización (solo en navegador, no en PWA) -->
+    <div *ngIf="showUpdateBanner && !platformInfo.isPWA" 
          class="fixed top-0 left-0 right-0 z-[9999] bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-2xl animate-slide-down">
       <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between flex-wrap">
           <div class="flex items-center flex-1">
-            <!-- Icono animado -->
             <div class="flex-shrink-0 mr-3">
               <svg class="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -34,7 +34,6 @@ import { Subscription, interval } from 'rxjs';
           </div>
           
           <div class="flex items-center space-x-2 mt-2 sm:mt-0 w-full sm:w-auto">
-            <!-- Botón Actualizar -->
             <button 
               (click)="onUpdate()"
               class="flex-1 sm:flex-initial px-4 py-2 bg-white text-green-600 rounded-lg font-medium text-sm hover:bg-green-50 transition duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
@@ -47,7 +46,6 @@ import { Subscription, interval } from 'rxjs';
               </span>
             </button>
             
-            <!-- Botón Después -->
             <button 
               (click)="onDismiss()"
               class="flex-1 sm:flex-initial px-4 py-2 bg-green-600 text-white border border-white/30 rounded-lg font-medium text-sm hover:bg-green-700 transition duration-200">
@@ -93,6 +91,15 @@ import { Subscription, interval } from 'rxjs';
         </div>
       </div>
     </div>
+
+    <!-- Badge de PWA (esquina inferior izquierda) -->
+    <div *ngIf="platformInfo.isPWA" 
+         class="fixed bottom-4 left-4 z-[9999] bg-green-500/20 backdrop-blur-sm text-green-400 px-3 py-1.5 rounded-full text-xs font-medium border border-green-500/30 flex items-center space-x-1">
+      <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+        <path d="M10 3.5a1.5 1.5 0 013 0V4a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-.5a1.5 1.5 0 000 3h.5a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-.5a1.5 1.5 0 00-3 0v.5a1 1 0 01-1 1H6a1 1 0 01-1-1v-3a1 1 0 00-1-1h-.5a1.5 1.5 0 010-3H4a1 1 0 001-1V6a1 1 0 011-1h3a1 1 0 001-1v-.5z"/>
+      </svg>
+      <span>PWA {{ platformInfo.isIOS ? 'iOS' : platformInfo.isAndroid ? 'Android' : '' }}</span>
+    </div>
   `,
   styles: [`
     @keyframes slide-down {
@@ -131,6 +138,11 @@ export class UpdateNotificationComponent implements OnInit, OnDestroy {
   pendingCount = 0;
   showSyncSuccess = false;
   navigator = window.navigator;
+  platformInfo: { isPWA: boolean; isIOS: boolean; isAndroid: boolean } = {
+    isPWA: false,
+    isIOS: false,
+    isAndroid: false
+  };
   
   private subscriptions: Subscription[] = [];
 
@@ -140,10 +152,17 @@ export class UpdateNotificationComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit(): Promise<void> {
-    // Suscribirse a actualizaciones disponibles
+    // Obtener información de la plataforma
+    this.platformInfo = this.updateService.getPlatformInfo();
+    //console.log('📱 Componente de actualización iniciado:', this.platformInfo);
+
+    // Suscribirse a actualizaciones disponibles (solo mostrar banner en navegador)
     this.subscriptions.push(
       this.updateService.updateAvailable.subscribe(available => {
-        this.showUpdateBanner = available;
+        // En PWA el diálogo nativo ya se muestra, solo mostrar banner en navegador
+        if (!this.platformInfo.isPWA) {
+          this.showUpdateBanner = available;
+        }
       })
     );
 
@@ -172,7 +191,7 @@ export class UpdateNotificationComponent implements OnInit, OnDestroy {
   }
 
   async syncNow(): Promise<void> {
-    console.log('🔄 Sincronizando manualmente...');
+    //console.log('🔄 Sincronizando manualmente...');
     await this.offlineSyncService.syncPendingRequests();
     this.pendingCount = await this.offlineSyncService.getPendingCount();
     
