@@ -1,3 +1,4 @@
+// src/app/pages/shared/interceptor.ts - ACTUALIZADO
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
@@ -6,13 +7,18 @@ import { catchError } from 'rxjs/operators';
 
 export const sessionInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
-  const token = localStorage.getItem('token'); // ✅ Cambiado de 'authToken' a 'token'
+  const token = localStorage.getItem('token');
 
-  // ✅ Lista de rutas públicas de TU API que NO requieren token
+  // NO interceptar navegación de Angular ni recursos locales
+  if (!req.url.startsWith('http')) {
+    return next(req);
+  }
+
+  // Lista de rutas públicas de TU API que NO requieren token
   const publicUrls = ['/api/login', '/api/register', '/api/registro', '/api/recuperar-password'];
   const isPublicUrl = publicUrls.some(url => req.url.includes(url));
 
-  // ✅ NUEVO: Excluir APIs externas (como Deezer)
+  // Excluir APIs externas
   const externalApis = [
     'api.deezer.com',
     'deezer.com',
@@ -22,9 +28,8 @@ export const sessionInterceptor: HttpInterceptorFn = (req, next) => {
   ];
   const isExternalApi = externalApis.some(domain => req.url.includes(domain));
 
-  // ✅ Si es API externa, dejar pasar sin token
+  // Si es API externa, dejar pasar sin token
   if (isExternalApi) {
-    console.log('🌐 Petición a API externa (sin token):', req.url);
     return next(req);
   }
 
@@ -46,7 +51,6 @@ export const sessionInterceptor: HttpInterceptorFn = (req, next) => {
         Authorization: `Bearer ${token}`
       }
     });
-    console.log('🔐 Token agregado a TU API:', req.url);
   }
 
   // Ejecutar la petición y manejar errores
@@ -57,7 +61,7 @@ export const sessionInterceptor: HttpInterceptorFn = (req, next) => {
         console.error('❌ Sesión inválida o expirada');
         
         // Limpiar localStorage
-        localStorage.removeItem('token'); // ✅ Cambiado de 'authToken' a 'token'
+        localStorage.removeItem('token');
         localStorage.removeItem('user_data');
         
         // Redirigir a login
