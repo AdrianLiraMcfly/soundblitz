@@ -66,7 +66,7 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    console.log('🚀 Dashboard inicializado');
+    //console.log('🚀 Dashboard inicializado');
     this.loadUserData();
     this.loadAllData();
     this.loadFavoritas();
@@ -74,36 +74,30 @@ export class DashboardComponent implements OnInit {
 
   private loadUserData(): void {
     const token = localStorage.getItem('authToken');
-    console.log('🔍 Token encontrado:', token ? 'Sí' : 'No');
+    //console.log('🔍 Token encontrado:', token ? 'Sí' : 'No');
 
     this.apiServices.me().subscribe({
       next: (response) => {
-        console.log('📦 Respuesta del endpoint /me:', response);
+        //console.log('📦 Respuesta del endpoint /me:', response);
         
         this.currentUser = response.data || response.usuario || response;
         
-        console.log('✅ Usuario cargado desde token:', {
-          id: this.currentUser?.id,
-          nombre: this.currentUser?.nombre,
-          email: this.currentUser?.email,
-          rol_id: this.currentUser?.rol_id
-        });
         
         if (!this.currentUser?.id) {
-          console.error('⚠️ El usuario no tiene ID:', this.currentUser);
+          //console.error('⚠️ El usuario no tiene ID:', this.currentUser);
           this.currentUser = null;
           alert('Error al obtener datos de usuario');
           this.router.navigate(['/login']);
           return;
         }
 
-        console.log('👤 Usuario válido detectado, cargando favoritas...');
+        //console.log('👤 Usuario válido detectado, cargando favoritas...');
         this.loadFavoritas();
       },
       error: (error) => {
-        console.error('❌ Error al obtener datos del usuario:', error);
-        console.error('   Status:', error.status);
-        console.error('   Mensaje:', error.error?.message || error.message);
+        //console.error('❌ Error al obtener datos del usuario:', error);
+        //console.error('   Status:', error.status);
+        //console.error('   Mensaje:', error.error?.message || error.message);
       }
     });
   }
@@ -118,9 +112,9 @@ export class DashboardComponent implements OnInit {
     ]).then(() => {
       this.loading = false;
       this.enrichData();
-      console.log('✅ Todos los datos cargados');
+      //console.log('✅ Todos los datos cargados');
     }).catch(error => {
-      console.error('❌ Error al cargar datos:', error);
+      //console.error('❌ Error al cargar datos:', error);
       this.loading = false;
     });
   }
@@ -130,11 +124,11 @@ export class DashboardComponent implements OnInit {
       this.apiServices.getArtistas().subscribe({
         next: (response) => {
           this.artistas = response.data || response || [];
-          console.log(`📊 ${this.artistas.length} artistas cargados`);
+          //console.log(`📊 ${this.artistas.length} artistas cargados`);
           resolve();
         },
         error: (error) => {
-          console.error('Error al cargar artistas:', error);
+          //console.error('Error al cargar artistas:', error);
           resolve();
         }
       });
@@ -146,11 +140,11 @@ export class DashboardComponent implements OnInit {
       this.apiServices.getAlbumes().subscribe({
         next: (response) => {
           this.albumes = response.data || response || [];
-          console.log(`📀 ${this.albumes.length} álbumes cargados`);
+          //console.log(`📀 ${this.albumes.length} álbumes cargados`);
           resolve();
         },
         error: (error) => {
-          console.error('Error al cargar álbumes:', error);
+          //console.error('Error al cargar álbumes:', error);
           resolve();
         }
       });
@@ -162,11 +156,11 @@ export class DashboardComponent implements OnInit {
       this.apiServices.getCanciones().subscribe({
         next: (response) => {
           this.canciones = response.data || response || [];
-          console.log(`🎵 ${this.canciones.length} canciones cargadas`);
+          //console.log(`🎵 ${this.canciones.length} canciones cargadas`);
           resolve();
         },
         error: (error) => {
-          console.error('Error al cargar canciones:', error);
+          //console.error('Error al cargar canciones:', error);
           resolve();
         }
       });
@@ -209,23 +203,22 @@ export class DashboardComponent implements OnInit {
   }
 
   private getAudioUrl(cancion: any): string {
-    console.log('🔍 DEBUG getAudioUrl:', {
-      cancion_completa: cancion,
-      url_cancion_raw: cancion.url_cancion,
-      tipo: typeof cancion.url_cancion
-    });
-
+    //console.log('🔍 DEBUG getAudioUrl:', {
+      //cancion_completa: cancion,
+      //url_cancion_raw: cancion.url_cancion,
+      //tipo: typeof cancion.url_cancion
+    //});
     if (!cancion.url_cancion || cancion.url_cancion === 'undefined' || cancion.url_cancion === 'null') {
-      console.warn('⚠️ Sin URL de audio para:', cancion.nombre);
+      //console.warn('⚠️ Sin URL de audio para:', cancion.nombre);
       return '';
     }
     
     let url = String(cancion.url_cancion).trim();
     
-    console.log('📝 URL limpia:', url);
+    //console.log('📝 URL limpia:', url);
 
     if (url.startsWith('http://') || url.startsWith('https://')) {
-      console.log('✅ URL completa detectada');
+      //console.log('✅ URL completa detectada');
       return url;
     }
     
@@ -238,32 +231,32 @@ export class DashboardComponent implements OnInit {
       let cleaned = urlFinal.replace(/\/?undefined\/?/g, '/');
       cleaned = cleaned.replace(/([^:]\/)\/+/g, '$1');
       cleaned = cleaned.replace(/\/+$/, '');
-      console.log('🛠️ URL corregida eliminando "undefined":', cleaned);
+      //console.log('🛠️ URL corregida eliminando "undefined":', cleaned);
       return cleaned;
     }
     
-    console.log('🎯 URL final construida:', urlFinal);
+    //console.log('🎯 URL final construida:', urlFinal);
     
     return urlFinal;
   }
 
   reproducirCancion(cancion: any): void {
-    console.log('🎵 Reproduciendo canción:', cancion.nombre);
-    console.log('   url_cancion original:', cancion.url_cancion);
-    console.log('   url_portada original:', cancion.url_portada);
+    //console.log('🎵 Reproduciendo canción:', cancion.nombre);
+    //console.log('   url_cancion original:', cancion.url_cancion);
+    //console.log('   url_portada original:', cancion.url_portada);
 
     if (cancion.url_portada.includes('undefined')) {
       let cleaned = cancion.url_portada.replace(/\/?undefined\/?/g, '');
       cleaned = cleaned.replace(/([^:]\/)\/+/g, '$1');
       cleaned = cleaned.replace(/\/+$/, '');
-      console.log('🛠️ Corrigiendo url_portada eliminando "undefined":', cleaned);
+      //console.log('🛠️ Corrigiendo url_portada eliminando "undefined":', cleaned);
       cancion.url_portada = cleaned;
     }
     
     const audioUrl = this.getAudioUrl(cancion);
     
     if (!audioUrl) {
-      console.error('❌ No se pudo obtener URL de audio');
+      //console.error('❌ No se pudo obtener URL de audio');
       alert('Esta canción no tiene archivo de audio disponible');
       return;
     }
@@ -283,7 +276,7 @@ export class DashboardComponent implements OnInit {
 
   private loadFavoritas(): void {
     if (!this.currentUser?.id) {
-      console.warn('⚠️ No hay usuario logueado para cargar favoritas');
+      //console.warn('⚠️ No hay usuario logueado para cargar favoritas');
       return;
     }
 
@@ -295,11 +288,11 @@ export class DashboardComponent implements OnInit {
           this.cancionesFavoritas.map(f => f.cancion_id || f.id)
         );
         
-        console.log('❤️ Favoritas cargadas:', this.cancionesFavoritas.length);
-        console.log('   IDs:', Array.from(this.favoritasIds));
+        //console.log('❤️ Favoritas cargadas:', this.cancionesFavoritas.length);
+        //console.log('   IDs:', Array.from(this.favoritasIds));
       },
       error: (error) => {
-        console.error('❌ Error al cargar favoritas:', error);
+        //console.error('❌ Error al cargar favoritas:', error);
       }
     });
   }
@@ -309,20 +302,20 @@ export class DashboardComponent implements OnInit {
       event.stopPropagation();
     }
 
-    console.log('🔍 DEBUG agregarAFavoritos - currentUser completo:', this.currentUser);
-    console.log('🔍 DEBUG agregarAFavoritos - currentUser.id:', this.currentUser?.id);
-    console.log('🔍 DEBUG agregarAFavoritos - tipo de id:', typeof this.currentUser?.id);
+    //console.log('🔍 DEBUG agregarAFavoritos - currentUser completo:', this.currentUser);
+    //console.log('🔍 DEBUG agregarAFavoritos - currentUser.id:', this.currentUser?.id);
+    //console.log('🔍 DEBUG agregarAFavoritos - tipo de id:', typeof this.currentUser?.id);
 
     if (!this.currentUser) {
-      console.error('❌ currentUser es null o undefined');
+      //console.error('❌ currentUser es null o undefined');
       alert('Debes iniciar sesión para agregar favoritos');
       this.router.navigate(['/login']);
       return;
     }
 
     if (!this.currentUser.id) {
-      console.error('❌ currentUser.id es null o undefined');
-      console.error('   currentUser completo:', this.currentUser);
+      //console.error('❌ currentUser.id es null o undefined');
+      //console.error('   currentUser completo:', this.currentUser);
       alert('Error: No se pudo obtener tu ID de usuario. Inicia sesión nuevamente.');
       localStorage.removeItem('user_data');
       localStorage.removeItem('token');
@@ -330,12 +323,7 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
-    console.log('👤 Usuario actual:', {
-      id: this.currentUser.id,
-      nombre: this.currentUser.nombre,
-      email: this.currentUser.email,
-      rol_id: this.currentUser.rol_id
-    });
+
 
     const esFavorito = this.esFavorito(cancion.id);
 
@@ -345,71 +333,57 @@ export class DashboardComponent implements OnInit {
       );
       
       if (!favorita) {
-        console.error('❌ No se encontró la favorita en el array local');
-        console.log('   cancionesFavoritas:', this.cancionesFavoritas);
-        console.log('   Buscando cancion.id:', cancion.id);
+        //console.error('❌ No se encontró la favorita en el array local');
+        //console.log('   cancionesFavoritas:', this.cancionesFavoritas);
+        //console.log('   Buscando cancion.id:', cancion.id);
         return;
       }
 
-      console.log('💔 Eliminando favorita:', {
-        id_favorita: favorita.id,
-        cancion_id: cancion.id,
-        usuario_id: this.currentUser.id
-      });
-
+      //console.log('💔 Eliminando favorita:', {
+      //  id_favorita: favorita.id,
+      //  cancion_id: cancion.id,
+      //  usuario_id: this.currentUser.id
+      //});
       this.apiServices.eliminarFavorita(favorita.id).subscribe({
         next: (response) => {
-          console.log('✅ Respuesta del servidor (eliminar):', response);
-          console.log('💔 Canción removida de favoritos:', cancion.nombre);
+          //console.log('✅ Respuesta del servidor (eliminar):', response);
+          //console.log('💔 Canción removida de favoritos:', cancion.nombre);
           
           this.favoritasIds.delete(cancion.id);
           this.cancionesFavoritas = this.cancionesFavoritas.filter(
             f => f.id !== favorita.id
           );
-          
-          console.log('📊 Estado actualizado:', {
-            total: this.cancionesFavoritas.length,
-            ids: Array.from(this.favoritasIds)
-          });
+
           
           this.mostrarNotificacion('Eliminado de favoritos', 'error');
         },
         error: (error) => {
-          console.error('❌ Error al eliminar de favoritos:', error);
-          console.error('   Status:', error.status);
-          console.error('   Mensaje:', error.error?.message || error.message);
+          //console.error('❌ Error al eliminar de favoritos:', error);
+          //console.error('   Status:', error.status);
+          //console.error('   Mensaje:', error.error?.message || error.message);
           alert('Error al eliminar de favoritos: ' + (error.error?.message || error.message));
         }
       });
     } else {
-      console.log('❤️ Agregando a favoritos:', {
-        usuario_id: this.currentUser.id,
-        cancion_id: cancion.id,
-        cancion_nombre: cancion.nombre
-      });
-
       const usuarioId = Number(this.currentUser.id);
       const cancionId = Number(cancion.id);
 
       if (isNaN(usuarioId) || isNaN(cancionId)) {
-        console.error('❌ IDs inválidos:', { usuarioId, cancionId });
+        //console.error('❌ IDs inválidos:', { usuarioId, cancionId });
         alert('Error: IDs inválidos');
         return;
       }
 
-      console.log('📤 Enviando al backend:', {
-        usuario_id: usuarioId,
-        cancion_id: cancionId
-      });
+
 
       this.apiServices.agregarFavorita(usuarioId, cancionId).subscribe({
         next: (response) => {
-          console.log('✅ Respuesta del servidor (agregar):', response);
-          console.log('❤️ Canción agregada a favoritos:', cancion.nombre);
+          //console.log('✅ Respuesta del servidor (agregar):', response);
+          //console.log('❤️ Canción agregada a favoritos:', cancion.nombre);
           
           const insertId = response.data?.insertId || response.data || response.insertId;
           
-          console.log('🆔 ID de favorita devuelto:', insertId);
+          //console.log('🆔 ID de favorita devuelto:', insertId);
           
           const nuevaFavorita = {
             id: insertId,
@@ -419,23 +393,19 @@ export class DashboardComponent implements OnInit {
             ...cancion
           };
           
-          console.log('📝 Nueva favorita creada:', nuevaFavorita);
+          //console.log('📝 Nueva favorita creada:', nuevaFavorita);
           
           this.favoritasIds.add(cancionId);
           this.cancionesFavoritas.push(nuevaFavorita);
-          
-          console.log('📊 Estado actualizado:', {
-            total: this.cancionesFavoritas.length,
-            ids: Array.from(this.favoritasIds)
-          });
+
           
           this.mostrarNotificacion('Agregado a favoritos', 'success');
         },
         error: (error) => {
-          console.error('❌ Error al agregar a favoritos:', error);
-          console.error('   Status:', error.status);
-          console.error('   Mensaje:', error.error?.message || error.message);
-          console.error('   Error completo:', error);
+          //console.error('❌ Error al agregar a favoritos:', error);
+          //console.error('   Status:', error.status);
+          //console.error('   Mensaje:', error.error?.message || error.message);
+          //console.error('   Error completo:', error);
           
           if (error.status === 409 || error.status === 400) {
             alert('Esta canción ya está en tus favoritos');
@@ -494,7 +464,7 @@ export class DashboardComponent implements OnInit {
     event.stopPropagation();
     this.showOptionsMenu[cancion.id] = false;
 
-    console.log('📱 Generando QR para:', cancion.nombre);
+    //console.log('📱 Generando QR para:', cancion.nombre);
 
     try {
       const qrImage = await this.qrService.generateSongQR(cancion);
@@ -503,9 +473,9 @@ export class DashboardComponent implements OnInit {
       this.currentQRSong = cancion;
       this.showQRModal = true;
 
-      console.log('✅ QR generado y modal abierto');
+      //console.log('✅ QR generado y modal abierto');
     } catch (error) {
-      console.error('❌ Error al generar QR:', error);
+      //console.error('❌ Error al generar QR:', error);
       this.mostrarNotificacion('Error al generar código QR', 'error');
     }
   }
@@ -533,7 +503,7 @@ export class DashboardComponent implements OnInit {
         );
         this.mostrarNotificacion('QR compartido', 'success');
       } catch (error) {
-        console.error('Error al compartir:', error);
+        //console.error('Error al compartir:', error);
       }
     }
   }
@@ -543,11 +513,11 @@ export class DashboardComponent implements OnInit {
   // ========================================
 
 async openQRScanner(): Promise<void> {
-  console.log('📷 Abriendo escáner QR...');
+  //console.log('📷 Abriendo escáner QR...');
   
   // Verificar si hay soporte de cámara
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    console.error('❌ getUserMedia no soportado');
+    //console.error('❌ getUserMedia no soportado');
     this.mostrarNotificacion('Tu dispositivo no soporta acceso a la cámara', 'error');
     return;
   }
@@ -562,7 +532,7 @@ async openQRScanner(): Promise<void> {
 
 private async startQRScanner(): Promise<void> {
   try {
-    console.log('📷 Solicitando acceso a la cámara...');
+    //console.log('📷 Solicitando acceso a la cámara...');
 
     // ✅ Configuración optimizada para móviles
     const constraints: MediaStreamConstraints = {
@@ -574,15 +544,15 @@ private async startQRScanner(): Promise<void> {
       audio: false
     };
 
-    console.log('🎥 Constraints:', constraints);
+    //console.log('🎥 Constraints:', constraints);
 
     // Solicitar acceso a la cámara
     this.stream = await navigator.mediaDevices.getUserMedia(constraints);
 
-    console.log('✅ Acceso a cámara concedido');
+    //console.log('✅ Acceso a cámara concedido');
 
     if (!this.qrVideo?.nativeElement) {
-      console.error('❌ Elemento de video no encontrado');
+      //console.error('❌ Elemento de video no encontrado');
       this.stopStream();
       return;
     }
@@ -599,15 +569,11 @@ private async startQRScanner(): Promise<void> {
     // ✅ Esperar a que el video esté listo
     await new Promise<void>((resolve, reject) => {
       video.onloadedmetadata = () => {
-        console.log('📹 Metadata cargada:', {
-          width: video.videoWidth,
-          height: video.videoHeight
-        });
         resolve();
       };
       
       video.onerror = (error) => {
-        console.error('❌ Error en video:', error);
+        //console.error('❌ Error en video:', error);
         reject(error);
       };
 
@@ -616,13 +582,13 @@ private async startQRScanner(): Promise<void> {
     });
 
     await video.play();
-    console.log('▶️ Video reproduciendo');
+    //console.log('▶️ Video reproduciendo');
 
     this.qrScanning = true;
     this.scanQRCode();
 
   } catch (error: any) {
-    console.error('❌ Error al iniciar cámara:', error);
+    //console.error('❌ Error al iniciar cámara:', error);
     
     let errorMsg = 'No se pudo acceder a la cámara';
     
@@ -643,7 +609,7 @@ private async startQRScanner(): Promise<void> {
 
 private scanQRCode(): void {
   if (!this.qrVideo?.nativeElement || !this.qrScanning) {
-    console.warn('⚠️ Escaneo cancelado - video o flag no disponible');
+    //  console.warn('⚠️ Escaneo cancelado - video o flag no disponible');
     return;
   }
 
@@ -652,7 +618,7 @@ private scanQRCode(): void {
   const context = canvas.getContext('2d', { willReadFrequently: true });
 
   if (!context) {
-    console.error('❌ No se pudo crear contexto 2D');
+    //console.error('❌ No se pudo crear contexto 2D');
     return;
   }
 
@@ -660,7 +626,7 @@ private scanQRCode(): void {
 
   const scan = () => {
     if (!this.qrScanning || !video.srcObject) {
-      console.log('🛑 Escaneo detenido');
+      //console.log('🛑 Escaneo detenido');
       return;
     }
 
@@ -670,7 +636,7 @@ private scanQRCode(): void {
         if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
           canvas.width = video.videoWidth;
           canvas.height = video.videoHeight;
-          console.log('📐 Canvas redimensionado:', canvas.width, 'x', canvas.height);
+          //console.log('📐 Canvas redimensionado:', canvas.width, 'x', canvas.height);
         }
 
         // ✅ Dibujar frame actual
@@ -684,7 +650,7 @@ private scanQRCode(): void {
           });
 
           if (code) {
-            console.log('📱 QR detectado:', code.data);
+            //console.log('📱 QR detectado:', code.data);
             this.handleQRDetected(code.data);
             return; // ✅ Detener escaneo al encontrar código
           }
@@ -693,36 +659,36 @@ private scanQRCode(): void {
         frameCount++;
       }
     } catch (error) {
-      console.error('❌ Error en escaneo:', error);
+      //console.error('❌ Error en escaneo:', error);
     }
 
     // ✅ Continuar escaneando
     this.animationFrameId = requestAnimationFrame(scan);
   };
 
-  console.log('🔍 Iniciando bucle de escaneo...');
+  //console.log('🔍 Iniciando bucle de escaneo...');
   scan();
 }
 
 private handleQRDetected(qrData: string): void {
-  console.log('🎯 Procesando QR detectado:', qrData);
+  //console.log('🎯 Procesando QR detectado:', qrData);
   
   const songData = this.qrService.parseSongQR(qrData);
 
   if (!songData) {
-    console.warn('⚠️ QR no válido para SoundBlitz');
+    //console.warn('⚠️ QR no válido para SoundBlitz');
     this.mostrarNotificacion('Este QR no es válido para SoundBlitz', 'error');
     
     // ✅ No cerrar el escáner, permitir seguir escaneando
     setTimeout(() => {
       if (this.qrScanning) {
-        console.log('🔄 Listo para escanear nuevamente');
+        //console.log('🔄 Listo para escanear nuevamente');
       }
     }, 2000);
     return;
   }
 
-  console.log('✅ Canción detectada:', songData);
+  //console.log('✅ Canción detectada:', songData);
   
   // ✅ Detener escaneo
   this.qrScanning = false;
@@ -748,17 +714,17 @@ private reproducirCancionPorId(cancionId: number): void {
   const cancion = this.canciones.find(c => c.id === cancionId);
   
   if (cancion) {
-    console.log('🎵 Reproduciendo canción escaneada:', cancion.nombre);
+    //console.log('🎵 Reproduciendo canción escaneada:', cancion.nombre);
     this.reproducirCancion(cancion);
     this.mostrarNotificacion(`Reproduciendo: ${cancion.nombre}`, 'success');
   } else {
-    console.error('❌ Canción no encontrada en la lista');
+    //console.error('❌ Canción no encontrada en la lista');
     this.mostrarNotificacion('No se encontró la canción en tu biblioteca', 'error');
   }
 }
 
 closeQRScanner(): void {
-  console.log('🔒 Cerrando escáner QR...');
+  //console.log('🔒 Cerrando escáner QR...');
   
   this.showQRScanner = false;
   this.qrScanning = false;
@@ -772,14 +738,14 @@ closeQRScanner(): void {
   // ✅ Detener stream
   this.stopStream();
 
-  console.log('✅ Escáner cerrado completamente');
+  //console.log('✅ Escáner cerrado completamente');
 }
 private stopStream(): void {
   if (this.stream) {
-    console.log('📴 Deteniendo stream de cámara...');
+    //console.log('📴 Deteniendo stream de cámara...');
     this.stream.getTracks().forEach(track => {
       track.stop();
-      console.log('🛑 Track detenido:', track.kind);
+      //console.log('🛑 Track detenido:', track.kind);
     });
     this.stream = null;
   }
@@ -791,11 +757,11 @@ private stopStream(): void {
 }
 
 async switchCamera(): Promise<void> {
-  console.log('🔄 Cambiando cámara...');
+  //console.log('🔄 Cambiando cámara...');
   
   // ✅ Cambiar modo
   this.currentFacingMode = this.currentFacingMode === 'user' ? 'environment' : 'user';
-  console.log('📷 Nuevo modo:', this.currentFacingMode);
+  //console.log('📷 Nuevo modo:', this.currentFacingMode);
   
   // ✅ Detener cámara actual
   this.qrScanning = false;
@@ -808,7 +774,7 @@ async switchCamera(): Promise<void> {
   this.startQRScanner();
 }
 ngOnDestroy(): void {
-  console.log('🧹 Limpiando componente dashboard...');
+  //console.log('🧹 Limpiando componente dashboard...');
   this.closeQRScanner();
 }
 

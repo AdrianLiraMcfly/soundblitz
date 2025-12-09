@@ -74,7 +74,7 @@ export class CrearAlbumesComponent implements OnInit {
         this.artistas = response.data || response;
       },
       error: (error) => {
-        console.error('Error al cargar artistas:', error);
+        //console.error('Error al cargar artistas:', error);
       }
     });
   }
@@ -101,7 +101,7 @@ export class CrearAlbumesComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error al cargar álbumes:', error);
+        //console.error('Error al cargar álbumes:', error);
         this.error = 'Error al cargar los álbumes. Por favor, intenta de nuevo.';
         this.loading = false;
         this.albumesOriginales = []; // ✅ Asegurar que esté vacío
@@ -153,7 +153,7 @@ export class CrearAlbumesComponent implements OnInit {
         }, 3000);
       },
       error: (error) => {
-        console.error('Error al agregar álbum:', error);
+        //console.error('Error al agregar álbum:', error);
         this.error = error.error?.message || 'Error al agregar el álbum. Por favor, intenta de nuevo.';
         this.loading = false;
       }
@@ -193,7 +193,7 @@ export class CrearAlbumesComponent implements OnInit {
         }, 3000);
       },
       error: (error) => {
-        console.error('Error al editar álbum:', error);
+        //console.error('Error al editar álbum:', error);
         this.error = 'Error al editar el álbum. Por favor, intenta de nuevo.';
         this.loading = false;
       }
@@ -215,7 +215,7 @@ export class CrearAlbumesComponent implements OnInit {
           }, 3000);
         },
         error: (error) => {
-          console.error('Error al eliminar álbum:', error);
+          //console.error('Error al eliminar álbum:', error);
           this.error = 'Error al eliminar el álbum. Por favor, intenta de nuevo.';
           this.loading = false;
         }
@@ -278,7 +278,7 @@ export class CrearAlbumesComponent implements OnInit {
           }, 3000);
         },
         error: (error) => {
-          console.error('Error al cambiar estado del álbum:', error);
+          //console.error('Error al cambiar estado del álbum:', error);
           this.error = 'Error al cambiar el estado del álbum. Por favor, intenta de nuevo.';
           this.loading = false;
         }

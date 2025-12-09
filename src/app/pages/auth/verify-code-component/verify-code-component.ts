@@ -45,47 +45,47 @@ export class VerifyCodeComponent implements OnInit, AfterViewInit, OnDestroy {
     this.verifyData.email = state?.['email'] || '';
     
     if (!this.verifyData.email) {
-      console.error('❌ No se recibió email, redirigiendo a login');
+      //console.error('❌ No se recibió email, redirigiendo a login');
       this.router.navigate(['/login']);
       return;
     }
 
-    console.log('📧 Email recibido:', this.verifyData.email);
+    //console.log('📧 Email recibido:', this.verifyData.email);
     this.startCountdown();
   }
 
   ngAfterViewInit(): void {
     // ✅ Renderizar reCAPTCHA v2 con más tiempo de espera
-    console.log('🔄 Esperando reCAPTCHA...');
+    //console.log('🔄 Esperando reCAPTCHA...');
     this.recaptchaService.waitForRecaptchaLoad(15000) // 15 segundos de timeout
       .then(() => {
-        console.log('✅ reCAPTCHA listo, intentando renderizar...');
+        //console.log('✅ reCAPTCHA listo, intentando renderizar...');
         
         // ✅ Pequeño delay para asegurar que el DOM esté listo
         setTimeout(() => {
           const element = document.getElementById('recaptcha-container-verify');
           if (!element) {
-            console.error('❌ Elemento recaptcha-container-verify no encontrado en el DOM');
+            //console.error('❌ Elemento recaptcha-container-verify no encontrado en el DOM');
             return;
           }
           
-          console.log('✅ Elemento encontrado, renderizando reCAPTCHA...');
+          //console.log('✅ Elemento encontrado, renderizando reCAPTCHA...');
           this.recaptchaWidgetId = this.recaptchaService.renderRecaptcha(
             'recaptcha-container-verify',
             (token) => {
               this.recaptchaToken = token;
-              console.log('✅ reCAPTCHA v2 completado en verify-code, token:', token.substring(0, 20) + '...');
+              //console.log('✅ reCAPTCHA v2 completado en verify-code, token:', token.substring(0, 20) + '...');
             }
           );
           
           if (this.recaptchaWidgetId === null) {
-            console.error('❌ No se pudo renderizar reCAPTCHA');
+            //console.error('❌ No se pudo renderizar reCAPTCHA');
           }
         }, 200);
       })
       .catch(err => {
-        console.error('❌ Error cargando reCAPTCHA:', err);
-        console.error('❌ Verifica que el script esté en index.html y que la red esté disponible');
+        //console.error('❌ Error cargando reCAPTCHA:', err);
+        //console.error('❌ Verifica que el script esté en index.html y que la red esté disponible');
       });
   }
 
@@ -110,15 +110,15 @@ export class VerifyCodeComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isLoading = true;
     this.hideError();
 
-    console.log('🔐 Verificando código con reCAPTCHA');
+    //console.log('🔐 Verificando código con reCAPTCHA');
 
 this.apiServices.validarCode(this.verifyData.code.trim(), this.verifyData.email, this.recaptchaToken).subscribe({
       next: (response) => {
-        console.log('✅ Código verificado:', response);
+        //console.log('✅ Código verificado:', response);
         this.handleVerifySuccess(response);
       },
       error: (error) => {
-        console.error('❌ Error al verificar código:', error);
+        //console.error('❌ Error al verificar código:', error);
         this.handleVerifyError(error);
         this.isLoading = false;
         // ✅ Resetear reCAPTCHA después de error
@@ -144,23 +144,23 @@ this.apiServices.validarCode(this.verifyData.code.trim(), this.verifyData.email,
         rol_id: Number(usuarioData.rol_id || 2)
       };
 
-      console.log('👤 Usuario verificado:', usuario);
+      //console.log('👤 Usuario verificado:', usuario);
       this.authService.login(usuario, token);
 
       setTimeout(() => {
         this.isLoading = false;
         
         if (usuario.rol_id === 1) {
-          console.log('🚀 Redirigiendo a panel de admin...');
+          //console.log('🚀 Redirigiendo a panel de admin...');
           this.router.navigate(['/admin/canciones']);
         } else {
-          console.log('🚀 Redirigiendo a dashboard...');
+          //console.log('🚀 Redirigiendo a dashboard...');
           this.router.navigate(['/dashboard']);
         }
       }, 1000);
 
     } catch (error: any) {
-      console.error('❌ Error procesando respuesta:', error);
+      //console.error('❌ Error procesando respuesta:', error);
       this.showErrorMessage(error.message || 'Error al procesar la respuesta');
       this.isLoading = false;
     }
@@ -183,7 +183,7 @@ this.apiServices.validarCode(this.verifyData.code.trim(), this.verifyData.email,
   onResendCode(): void {
     if (!this.canResend) return;
 
-    console.log('🔄 Reenviando código a:', this.verifyData.email);
+    //console.log('🔄 Reenviando código a:', this.verifyData.email);
 
     // TODO: Implementar endpoint backend para reenviar código
     setTimeout(() => {
@@ -233,7 +233,7 @@ this.apiServices.validarCode(this.verifyData.code.trim(), this.verifyData.email,
   }
 
   private showSuccessMessage(message: string): void {
-    console.log(`✅ ${message}`);
+    //console.log(`✅ ${message}`);
   }
 
 onCodeInput(event: any): void {

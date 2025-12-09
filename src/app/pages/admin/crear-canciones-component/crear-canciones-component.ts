@@ -105,7 +105,7 @@ export class CrearCancionesComponent implements OnInit {
           resolve();
         },
         error: (error) => {
-          console.error('Error al cargar artistas:', error);
+          //console.error('Error al cargar artistas:', error);
           reject(error);
         }
       });
@@ -120,7 +120,7 @@ export class CrearCancionesComponent implements OnInit {
           resolve();
         },
         error: (error) => {
-          console.error('Error al cargar álbumes:', error);
+          //console.error('Error al cargar álbumes:', error);
           reject(error);
         }
       });
@@ -133,7 +133,7 @@ export class CrearCancionesComponent implements OnInit {
         this.artistas = response.data || response;
       },
       error: (error) => {
-        console.error('Error al cargar artistas:', error);
+        //console.error('Error al cargar artistas:', error);
       }
     });
   }
@@ -144,7 +144,7 @@ export class CrearCancionesComponent implements OnInit {
         this.albumes = response.data || response;
       },
       error: (error) => {
-        console.error('Error al cargar álbumes:', error);
+        //console.error('Error al cargar álbumes:', error);
       }
     });
   }
@@ -195,7 +195,7 @@ export class CrearCancionesComponent implements OnInit {
       // ✅ Obtener duración del audio
       this.obtenerDuracionAudio(file);
       
-      console.log('✅ Archivo MP3 seleccionado:', file.name, 'Tamaño:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
+      //console.log('✅ Archivo MP3 seleccionado:', file.name, 'Tamaño:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
     }
   }
 
@@ -209,7 +209,7 @@ export class CrearCancionesComponent implements OnInit {
       const minutos = Math.floor(duracion / 60);
       const segundos = duracion % 60;
       this.nuevaCancion.duracion = `${minutos}:${segundos.toString().padStart(2, '0')}`;
-      console.log('⏱️ Duración detectada:', this.nuevaCancion.duracion);
+      //console.log('⏱️ Duración detectada:', this.nuevaCancion.duracion);
       URL.revokeObjectURL(url);
     });
     
@@ -252,7 +252,7 @@ export class CrearCancionesComponent implements OnInit {
         }
       },
       error: (error) => {
-        console.error('Error al buscar en Deezer:', error);
+        //console.error('Error al buscar en Deezer:', error);
         this.error = 'Error al buscar en Deezer. Por favor, intenta de nuevo.';
         this.buscandoDeezer = false;
         this.resultadosDeezer = [];
@@ -267,9 +267,9 @@ seleccionarCancionDeezer(track: any): void {
   this.nuevaCancion.nombre = track.title || '';
   this.nuevaCancion.url_portada = track.album.cover_medium || track.album.cover_big || track.album.cover_xl || '';
   
-  console.log('✅ Datos importados de Deezer:');
-  console.log('   Nombre:', this.nuevaCancion.nombre);
-  console.log('   Portada:', this.nuevaCancion.url_portada);
+  //console.log('✅ Datos importados de Deezer:');
+  //console.log('   Nombre:', this.nuevaCancion.nombre);
+  //console.log('   Portada:', this.nuevaCancion.url_portada);
   
   this.busquedaDeezer = '';
   this.resultadosDeezer = [];
@@ -329,11 +329,11 @@ agregarCancion(event: Event): void {
   // 2. cancion (archivo MP3)
   formData.append('cancion', this.archivoMP3, this.archivoMP3.name);
 
-  console.log('📤 Enviando canción con archivo MP3');
-  console.log('📋 Datos completos:', cancionData);
-  console.log('🎵 Archivo MP3:', this.archivoMP3.name, `(${(this.archivoMP3.size / 1024 / 1024).toFixed(2)} MB)`);
-  console.log('🖼️ URL Portada:', cancionData.url_portada || 'No especificada');
-  console.log('⏱️ Duración:', cancionData.duracion || 'No detectada');
+  //console.log('📤 Enviando canción con archivo MP3');
+  //console.log('📋 Datos completos:', cancionData);
+  //console.log('🎵 Archivo MP3:', this.archivoMP3.name, `(${(this.archivoMP3.size / 1024 / 1024).toFixed(2)} MB)`);
+  //console.log('🖼️ URL Portada:', cancionData.url_portada || 'No especificada');
+  //console.log('⏱️ Duración:', cancionData.duracion || 'No detectada');
 
   // Simular progreso
   const interval = setInterval(() => {
@@ -346,7 +346,7 @@ agregarCancion(event: Event): void {
       clearInterval(interval);
       this.progresoCarga = 100;
       
-      console.log('✅ Canción creada exitosamente:', response);
+      //console.log('✅ Canción creada exitosamente:', response);
       this.successMessage = `Canción "${this.nuevaCancion.nombre}" agregada exitosamente`;
 
       setTimeout(() => {
@@ -362,7 +362,7 @@ agregarCancion(event: Event): void {
     },
     error: (error) => {
       clearInterval(interval);
-      console.error('❌ Error al agregar canción:', error);
+      //console.error('❌ Error al agregar canción:', error);
 
       if (error.status === 500) {
         this.error = error.error?.message || 'Error del servidor. Verifica los logs del backend.';
@@ -413,7 +413,7 @@ agregarCancion(event: Event): void {
         this.loadingInitial = false;
       },
       error: (error) => {
-        console.error('Error al cargar canciones:', error);
+        //console.error('Error al cargar canciones:', error);
         this.error = 'Error al cargar las canciones. Por favor, intenta de nuevo.';
         this.loading = false;
         this.loadingInitial = false;
@@ -457,7 +457,7 @@ agregarCancion(event: Event): void {
         }, 3000);
       },
       error: (error) => {
-        console.error('Error al editar canción:', error);
+        //console.error('Error al editar canción:', error);
         this.error = 'Error al editar la canción. Por favor, intenta de nuevo.';
         this.loading = false;
         setTimeout(() => this.error = '', 3000);
@@ -489,7 +489,7 @@ agregarCancion(event: Event): void {
           }, 3000);
         },
         error: (error) => {
-          console.error('Error al cambiar estado:', error);
+          //console.error('Error al cambiar estado:', error);
           this.error = 'Error al cambiar el estado de la canción.';
           setTimeout(() => this.error = '', 3000);
         }
@@ -512,7 +512,7 @@ agregarCancion(event: Event): void {
           }, 3000);
         },
         error: (error) => {
-          console.error('Error al eliminar canción:', error);
+          //console.error('Error al eliminar canción:', error);
           this.error = 'Error al eliminar la canción. Por favor, intenta de nuevo.';
           setTimeout(() => this.error = '', 3000);
         }

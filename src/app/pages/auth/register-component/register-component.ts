@@ -50,11 +50,10 @@ export class RegisterComponent implements OnInit, AfterViewInit, OnDestroy {
           'recaptcha-container-register',
           (token) => {
             this.recaptchaToken = token;
-            console.log('✅ reCAPTCHA v2 completado en register');
+            //console.log('✅ reCAPTCHA v2 completado en register');
           }
         );
       })
-      .catch(err => console.error('❌ Error cargando reCAPTCHA:', err));
   }
 
   ngOnDestroy(): void {
@@ -86,15 +85,15 @@ export class RegisterComponent implements OnInit, AfterViewInit, OnDestroy {
       recaptchaToken: this.recaptchaToken
     };
 
-    console.log('📝 Registrando usuario:', userData.email);
+    //console.log('📝 Registrando usuario:', userData.email);
 
     this.apiServices.crearUsuario(userData).subscribe({
       next: (response) => {
-        console.log('✅ Usuario registrado:', response);
+        //console.log('✅ Usuario registrado:', response);
         this.handleRegisterSuccess();
       },
       error: (error) => {
-        console.error('❌ Error en registro:', error);
+        //console.error('❌ Error en registro:', error);
         this.handleRegisterError(error);
         this.isLoading = false;
         // ✅ Resetear reCAPTCHA después de error

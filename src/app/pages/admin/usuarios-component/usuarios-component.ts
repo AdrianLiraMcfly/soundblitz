@@ -65,11 +65,11 @@ cargarUsuarios(): void {
   this.loading = true;
   this.error = '';
   
-  console.log('🔄 Cargando usuarios...');
+  //console.log('🔄 Cargando usuarios...');
   
   this.apiServices.getUsuarios().subscribe({
     next: (response) => {
-      console.log('✅ Respuesta recibida:', response);
+      //console.log('✅ Respuesta recibida:', response);
       this.usuariosOriginales = response.data || response;
       this.totalUsuarios = this.usuariosOriginales.length;
       this.calcularEstadisticas();
@@ -77,8 +77,8 @@ cargarUsuarios(): void {
       this.loading = false;
     },
     error: (error) => {
-      console.error('❌ Error al cargar usuarios:', error);
-      console.error('❌ Detalles del error:', error.error);
+     //console.error('❌ Error al cargar usuarios:', error);
+      //console.error('❌ Detalles del error:', error.error);
       
       // Mostrar mensaje más específico
       if (error.status === 500) {
@@ -143,7 +143,7 @@ cargarUsuarios(): void {
         }, 3000);
       },
       error: (error) => {
-        console.error('Error al crear usuario:', error);
+        //console.error('Error al crear usuario:', error);
         this.error = error.error?.message || 'Error al crear el usuario. Por favor, intenta de nuevo.';
         this.loading = false;
       }
@@ -197,7 +197,7 @@ cargarUsuarios(): void {
         }, 3000);
       },
       error: (error) => {
-        console.error('Error al actualizar usuario:', error);
+        //console.error('Error al actualizar usuario:', error);
         this.error = error.error?.message || 'Error al actualizar el usuario. Por favor, intenta de nuevo.';
         this.loading = false;
       }
@@ -218,7 +218,7 @@ cargarUsuarios(): void {
           }, 3000);
         },
         error: (error) => {
-          console.error('Error al eliminar usuario:', error);
+          //console.error('Error al eliminar usuario:', error);
           this.error = 'Error al eliminar el usuario. Por favor, intenta de nuevo.';
           this.loading = false;
         }
@@ -242,7 +242,7 @@ cargarUsuarios(): void {
           this.loading = false;
         },
         error: (error) => {
-          console.error('Error al resetear contraseña:', error);
+          //console.error('Error al resetear contraseña:', error);
           this.error = 'Error al resetear la contraseña. Por favor, intenta de nuevo.';
           this.loading = false;
         }

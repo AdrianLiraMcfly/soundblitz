@@ -25,7 +25,7 @@ export class AdminPanelComponent implements OnInit {
   ngOnInit(): void {
     // Verificar que sea admin
     if (!this.authService.isAdmin()) {
-      console.error('⛔ Acceso denegado - No es administrador');
+      //console.error('⛔ Acceso denegado - No es administrador');
       this.router.navigate(['/dashboard']);
       return;
     }
@@ -34,7 +34,7 @@ export class AdminPanelComponent implements OnInit {
     const currentUser = this.authService.currentUserValue;
     this.adminNombre = currentUser?.nombre || 'Admin';
     
-    console.log('👑 Panel de administración cargado');
+    //console.log('👑 Panel de administración cargado');
     
     // Establecer tab activo según la ruta actual
     this.setActiveTabFromRoute();
@@ -59,7 +59,7 @@ export class AdminPanelComponent implements OnInit {
   navigateTo(tab: 'artistas' | 'albumes' | 'canciones' | 'usuarios'): void {
     this.activeTab = tab;
     this.router.navigate([`/admin/${tab}`]);
-    console.log(`📍 Navegando a: /admin/${tab}`);
+    //console.log(`📍 Navegando a: /admin/${tab}`);
   }
 
   // Toggle del menú de usuario
@@ -69,7 +69,7 @@ export class AdminPanelComponent implements OnInit {
 
   // Cerrar sesión
   logout(): void {
-    console.log('👋 Cerrando sesión de administrador...');
+    //console.log('👋 Cerrando sesión de administrador...');
     this.authService.logout();
     this.router.navigate(['/login']);
   }

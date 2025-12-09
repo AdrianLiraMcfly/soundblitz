@@ -139,7 +139,7 @@ private cargarCancionIndividual(): void {
     ]).then(() => {
       this.loading = false;
     }).catch(error => {
-      console.error('Error al cargar datos del artista:', error);
+      //console.error('Error al cargar datos del artista:', error);
       this.error = 'Error al cargar la información del artista';
       this.loading = false;
     });
@@ -156,7 +156,7 @@ private cargarCancionIndividual(): void {
     ]).then(() => {
       this.loading = false;
     }).catch(error => {
-      console.error('Error al cargar datos del álbum:', error);
+      //console.error('Error al cargar datos del álbum:', error);
       this.error = 'Error al cargar la información del álbum';
       this.loading = false;
     });
@@ -178,7 +178,7 @@ private cargarCancionIndividual(): void {
           }
         },
         error: (error) => {
-          console.error('Error al obtener artista:', error);
+          //console.error('Error al obtener artista:', error);
           reject(error);
         }
       });
@@ -198,11 +198,11 @@ private cargarCancionIndividual(): void {
           // Enriquecer con datos de artistas y álbumes
           this.enriquecerCanciones();
           
-          console.log(`✅ ${this.canciones.length} canciones del artista cargadas`);
+          //console.log(`✅ ${this.canciones.length} canciones del artista cargadas`);
           resolve();
         },
         error: (error) => {
-          console.error('Error al obtener canciones:', error);
+          //console.error('Error al obtener canciones:', error);
           reject(error);
         }
       });
@@ -236,7 +236,7 @@ private cargarCancionIndividual(): void {
           }
         },
         error: (error) => {
-          console.error('Error al obtener álbum:', error);
+          //console.error('Error al obtener álbum:', error);
           reject(error);
         }
       });
@@ -256,11 +256,11 @@ private cargarCancionIndividual(): void {
           // Enriquecer con datos
           this.enriquecerCanciones();
           
-          console.log(`✅ ${this.canciones.length} canciones del álbum cargadas`);
+          //console.log(`✅ ${this.canciones.length} canciones del álbum cargadas`);
           resolve();
         },
         error: (error) => {
-          console.error('Error al obtener canciones:', error);
+          //console.error('Error al obtener canciones:', error);
           reject(error);
         }
       });
@@ -297,7 +297,7 @@ private cargarCancionIndividual(): void {
   reproducirCancion(cancion: Cancion): void {
     this.cancionActual = cancion;
     this.isPlaying = true;
-    console.log('🎵 Reproduciendo:', cancion.nombre);
+    //console.log('🎵 Reproduciendo:', cancion.nombre);
     // Aquí puedes implementar la lógica de reproducción real
   }
 
@@ -308,13 +308,13 @@ private cargarCancionIndividual(): void {
 
   // Agregar a favoritos
   agregarAFavoritos(cancion: Cancion): void {
-    console.log('❤️ Agregando a favoritos:', cancion.nombre);
+    //console.log('❤️ Agregando a favoritos:', cancion.nombre);
     // Implementar lógica de favoritos
   }
 
   // Agregar a playlist
   agregarAPlaylist(cancion: Cancion): void {
-    console.log('📋 Agregando a playlist:', cancion.nombre);
+    //console.log('📋 Agregando a playlist:', cancion.nombre);
     // Implementar lógica de playlist
   }
 
@@ -368,7 +368,7 @@ private cargarCancionIndividual(): void {
       urlLimpia = `http://localhost:8085/files/${urlLimpia}`;
     }
     
-    console.log('🔧 URL limpiada:', urlLimpia);
+    //console.log('🔧 URL limpiada:', urlLimpia);
     return urlLimpia;
   }
 

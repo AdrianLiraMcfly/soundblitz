@@ -63,7 +63,7 @@ export class CrearArtistasComponent implements OnInit {
         this.loading = false;
       },
       error: (error) => {
-        console.error('Error al cargar artistas:', error);
+        //console.error('Error al cargar artistas:', error);
         this.error = 'Error al cargar los artistas. Por favor, intenta de nuevo.';
         this.loading = false;
         this.artistasOriginales = [];
@@ -101,7 +101,7 @@ export class CrearArtistasComponent implements OnInit {
         }, 3000);
       },
       error: (error) => {
-        console.error('Error al agregar artista:', error);
+        //console.error('Error al agregar artista:', error);
         this.error = error.error?.message || 'Error al agregar el artista. Por favor, intenta de nuevo.';
         this.loading = false;
       }
@@ -130,7 +130,7 @@ export class CrearArtistasComponent implements OnInit {
           }, 3000);
         },
         error: (error) => {
-          console.error('Error al editar artista:', error);
+          //console.error('Error al editar artista:', error);
           this.error = 'Error al editar el artista. Por favor, intenta de nuevo.';
           this.loading = false;
         }
@@ -161,7 +161,7 @@ export class CrearArtistasComponent implements OnInit {
           }, 3000);
         },
         error: (error) => {
-          console.error('Error al cambiar estado del artista:', error);
+          //console.error('Error al cambiar estado del artista:', error);
           this.error = 'Error al cambiar el estado del artista. Por favor, intenta de nuevo.';
           this.loading = false;
         }
@@ -184,7 +184,7 @@ export class CrearArtistasComponent implements OnInit {
           }, 3000);
         },
         error: (error) => {
-          console.error('Error al eliminar artista:', error);
+          //console.error('Error al eliminar artista:', error);
           this.error = 'Error al eliminar el artista. Por favor, intenta de nuevo.';
           this.loading = false;
         }

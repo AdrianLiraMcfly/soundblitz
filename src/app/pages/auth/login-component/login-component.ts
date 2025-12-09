@@ -48,11 +48,10 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
           'recaptcha-container',
           (token) => {
             this.recaptchaToken = token;
-            console.log('✅ reCAPTCHA v2 completado');
+            //console.log('✅ reCAPTCHA v2 completado');
           }
         );
       })
-      .catch(err => console.error('❌ Error cargando reCAPTCHA:', err));
 
     // Auto-completar email si se guardó
     const rememberUser = localStorage.getItem('rememberUser');
@@ -70,7 +69,7 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private checkExistingAuth(): void {
     if (this.authService.isAuthenticated()) {
-      console.log('✅ Usuario ya autenticado, redirigiendo...');
+      //console.log('✅ Usuario ya autenticado, redirigiendo...');
       const isAdmin = this.authService.isAdmin();
       
       if (isAdmin) {
@@ -102,15 +101,15 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
       recaptchaToken: this.recaptchaToken
     };
 
-    console.log('🔐 Intentando login con:', credentials.email);
+    //console.log('🔐 Intentando login con:', credentials.email);
 
     this.apiServices.login(credentials).subscribe({
       next: (response) => {
-        console.log('📥 Respuesta del servidor:', response);
+        //console.log('📥 Respuesta del servidor:', response);
         this.handleLoginSuccess(response);
       },
       error: (error) => {
-        console.error('❌ Error en login:', error);
+        //console.error('❌ Error en login:', error);
         this.handleLoginError(error);
         this.isLoading = false;
         // ✅ Resetear reCAPTCHA después de error
@@ -122,7 +121,7 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private handleLoginSuccess(response: any): void {
     try {
-      console.log('✅ Credenciales correctas, código enviado por email');
+      //console.log('✅ Credenciales correctas, código enviado por email');
       
       if (this.loginData.rememberMe) {
         localStorage.setItem('rememberUser', 'true');
