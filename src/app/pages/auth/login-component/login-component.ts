@@ -134,63 +134,62 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
     localStorage.setItem('pwa-install-dismissed', 'true');
   }
 
-  onLogin(): void {
-    if (!this.recaptchaToken) {
-      this.showErrorMessage('Por favor, completa el reCAPTCHA');
-      return;
-    }
+onLogin(): void {
+  if (!this.recaptchaToken) {
+    this.showErrorMessage('Por favor, completa el reCAPTCHA');
+    return;
+  }
 
-    if (!this.validateForm()) {
-      return;
-    }
+  if (!this.validateForm()) {
+    return;
+  }
 
-    this.isLoading = true;
-    this.hideError();
+  this.isLoading = true;
+  this.hideError();
 
-    const credentials = {
-      email: this.loginData.email.trim(),
-      password: this.loginData.password,
-      recaptchaToken: this.recaptchaToken
-    };
+  const credentials = {
+    email: this.loginData.email.trim(),
+    password: this.loginData.password,
+    recaptchaToken: this.recaptchaToken
+  };
 
-    this.apiServices.login(credentials).subscribe({
-      next: (response) => {
-        if (response.success) {
-          const userData = response.data.user;
-          const token = response.data.token;
-
-          this.authService.saveAuthData(token, userData);
-
-          if (this.loginData.rememberMe) {
-            localStorage.setItem('rememberUser', 'true');
-            localStorage.setItem('userEmail', this.loginData.email);
-          } else {
-            localStorage.removeItem('rememberUser');
-            localStorage.removeItem('userEmail');
-          }
-
-          const isAdmin = userData.roles?.some((role: any) => role.nombre === 'Admin');
-          
-          if (isAdmin) {
-            this.router.navigate(['/admin/canciones']);
-          } else {
-            this.router.navigate(['/dashboard']);
-          }
+  this.apiServices.login(credentials).subscribe({
+    next: (response) => {
+      console.log('📥 Respuesta del login:', response);
+      
+      if (response.success) {
+        if (this.loginData.rememberMe) {
+          localStorage.setItem('rememberUser', 'true');
+          localStorage.setItem('userEmail', this.loginData.email);
         } else {
-          this.showErrorMessage(response.message || 'Error al iniciar sesión');
-          this.resetRecaptcha();
+          localStorage.removeItem('rememberUser');
+          localStorage.removeItem('userEmail');
         }
+        
         this.isLoading = false;
-      },
-      error: (error) => {
-        const errorMsg = error.error?.message || 'Error de conexión. Inténtalo de nuevo.';
-        this.showErrorMessage(errorMsg);
+        
+        // Redirigir a verify-code con el email
+        this.router.navigate(['/verify-code'], {
+          state: { 
+            email: this.loginData.email,
+            message: response.message || 'Código enviado a tu email'
+          }
+        });
+      } else {
+        // Credenciales incorrectas
+        this.showErrorMessage(response.message || 'Credenciales incorrectas');
         this.resetRecaptcha();
         this.isLoading = false;
       }
-    });
-  }
-
+    },
+    error: (error) => {
+      const errorMsg = error.error?.message || 'Error de conexión. Inténtalo de nuevo.';
+      this.showErrorMessage(errorMsg);
+      this.resetRecaptcha();
+      this.isLoading = false;
+    }
+  });
+}
   private validateForm(): boolean {
     if (!this.loginData.email.trim()) {
       this.showErrorMessage('Por favor, introduce tu email o nombre de usuario');
