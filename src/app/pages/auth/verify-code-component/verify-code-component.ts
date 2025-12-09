@@ -112,7 +112,7 @@ export class VerifyCodeComponent implements OnInit, AfterViewInit, OnDestroy {
 
     console.log('🔐 Verificando código con reCAPTCHA');
 
-    this.apiServices.validarCode(this.verifyData.code.trim(), this.verifyData.email).subscribe({
+this.apiServices.validarCode(this.verifyData.code.trim(), this.verifyData.email, this.recaptchaToken).subscribe({
       next: (response) => {
         console.log('✅ Código verificado:', response);
         this.handleVerifySuccess(response);

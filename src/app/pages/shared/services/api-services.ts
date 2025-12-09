@@ -75,8 +75,12 @@ export class ApiServices {
   }
 
 // Reemplazar el método validarCode en api-services.ts:
-validarCode(code: string, email: string): Observable<any> {
-  return this.http.post(`${this.apiUrl}/usuarios/validar_code`, { code, email });
+validarCode(code: string, email: string, recaptchaToken: string): Observable<any> {
+  return this.http.post(`${this.apiUrl}/usuarios/validar_code`, { 
+    code, 
+    email, 
+    recaptchaToken 
+  });
 }
 
   // ===== CANCIONES =====
