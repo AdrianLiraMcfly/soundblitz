@@ -31,6 +31,7 @@ export class NavbarComponent implements OnInit {
   currentUser: Usuario | null = null;
   isAdminUser: boolean = false;
   isMenuOpen: boolean = false;
+  isUserMenuOpen: boolean = false;
   private userSubscription?: Subscription;
 
   @Output() onSearch: EventEmitter<string> = new EventEmitter<string>();
@@ -310,7 +311,14 @@ export class NavbarComponent implements OnInit {
   openSettings(): void {
     this.router.navigate(['/configuracion']);
   }
+  
+  toggleUserMenu(): void {
+  this.isUserMenuOpen = !this.isUserMenuOpen;
+}
 
+closeUserMenu(): void {
+  this.isUserMenuOpen = false;
+}
   
 
 }

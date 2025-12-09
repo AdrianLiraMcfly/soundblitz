@@ -215,35 +215,46 @@
         </div>
       </div>
 
-      <!-- Sección derecha: Botones de acción + Usuario -->
-      <div class="flex items-center space-x-3">
+     <!-- Sección derecha: Botones de acción + Usuario -->
+<div class="flex items-center space-x-3">
 
-        <!-- User profile -->
-        <div class="relative group">
-          <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-105 transition duration-200">
-            <span class="text-black font-bold text-sm">{{ currentUser?.nombre?.charAt(0) || 'U' }}</span>
-          </div>
-          
-          <!-- Dropdown del usuario -->
-          <div class="absolute top-full right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-            <div class="py-2">
-              <div class="px-4 py-2 border-b border-gray-700">
-                <p class="text-white font-medium text-sm">{{ currentUser?.nombre || 'Usuario' }}</p>
-                <p class="text-gray-400 text-xs">{{ currentUser?.email || 'email@ejemplo.com' }}</p>
-                <div *ngIf="isAdminUser" class="flex items-center space-x-1 mt-1">
-                  <svg class="w-3 h-3 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                  </svg>
-                  <span class="text-orange-400 text-xs">Administrador</span>
-                </div>
-              </div>
-              <button (click)="logout()" class="w-full text-left px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-gray-700 transition duration-200">
-                Cerrar sesión
-              </button>
-            </div>
+  <!-- User profile -->
+  <div class="relative">
+    <div (click)="toggleUserMenu()" 
+         class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center cursor-pointer hover:scale-105 transition duration-200">
+      <span class="text-black font-bold text-sm">{{ currentUser?.nombre?.charAt(0) || 'U' }}</span>
+    </div>
+    
+    <!-- Dropdown del usuario -->
+    <div [class.opacity-0]="!isUserMenuOpen" 
+         [class.invisible]="!isUserMenuOpen"
+         [class.opacity-100]="isUserMenuOpen"
+         [class.visible]="isUserMenuOpen"
+         class="absolute top-full right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl transition-all duration-200 z-50">
+      <div class="py-2">
+        <div class="px-4 py-2 border-b border-gray-700">
+          <p class="text-white font-medium text-sm">{{ currentUser?.nombre || 'Usuario' }}</p>
+          <p class="text-gray-400 text-xs">{{ currentUser?.email || 'email@ejemplo.com' }}</p>
+          <div *ngIf="isAdminUser" class="flex items-center space-x-1 mt-1">
+            <svg class="w-3 h-3 text-orange-400" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+            <span class="text-orange-400 text-xs">Administrador</span>
           </div>
         </div>
+        <button (click)="logout(); closeUserMenu()" 
+                class="w-full text-left px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-gray-700 transition duration-200">
+          Cerrar sesión
+        </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay para cerrar el menú al hacer click fuera -->
+<div *ngIf="isUserMenuOpen" 
+     (click)="closeUserMenu()" 
+     class="fixed inset-0 z-40"></div>
     </div>
   </div>
 </header>
