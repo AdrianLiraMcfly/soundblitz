@@ -1,3 +1,4 @@
+// offline-sync.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, from, of } from 'rxjs';
@@ -21,6 +22,7 @@ export class OfflineSyncService {
   private readonly DB_VERSION = 1;
   private readonly STORE_NAME = 'pending-requests';
   private db: IDBDatabase | null = null;
+  private isSyncing = false;
 
   constructor(private http: HttpClient) {
     this.initDB();
@@ -35,7 +37,6 @@ export class OfflineSyncService {
       request.onerror = () => reject(request.error);
       request.onsuccess = () => {
         this.db = request.result;
-        ////console.log('✅ IndexedDB inicializada');
         resolve();
       };
 
@@ -44,7 +45,6 @@ export class OfflineSyncService {
         if (!db.objectStoreNames.contains(this.STORE_NAME)) {
           const objectStore = db.createObjectStore(this.STORE_NAME, { keyPath: 'id' });
           objectStore.createIndex('timestamp', 'timestamp', { unique: false });
-          ////console.log('📦 ObjectStore creado');
         }
       };
     });
@@ -53,9 +53,14 @@ export class OfflineSyncService {
   // Configurar listener para cuando vuelve la conexión
   private setupOnlineListener(): void {
     window.addEventListener('online', () => {
-      ////console.log('🌐 Conexión restaurada - Sincronizando peticiones pendientes...');
+      console.log('🌐 Conexión restaurada - Sincronizando automáticamente...');
       this.syncPendingRequests();
     });
+
+    // Verificar peticiones pendientes al iniciar si hay conexión
+    if (this.isOnline()) {
+      setTimeout(() => this.syncPendingRequests(), 2000);
+    }
   }
 
   // Verificar si hay conexión
@@ -91,8 +96,7 @@ export class OfflineSyncService {
       const addRequest = store.add(request);
 
       addRequest.onsuccess = () => {
-        ////console.log('💾 Petición guardada para sincronizar:', method, url);
-        this.showOfflineNotification();
+        console.log('💾 Acción guardada - Se sincronizará automáticamente:', method, url);
         resolve(id);
       };
       addRequest.onerror = () => reject(addRequest.error);
@@ -131,46 +135,55 @@ export class OfflineSyncService {
     });
   }
 
-  // Sincronizar todas las peticiones pendientes
+  // Sincronizar todas las peticiones pendientes automáticamente
   async syncPendingRequests(): Promise<void> {
-    if (!this.isOnline()) {
-      ////console.log('📡 Sin conexión - No se puede sincronizar');
+    if (!this.isOnline() || this.isSyncing) {
       return;
     }
 
+    this.isSyncing = true;
     const pendingRequests = await this.getPendingRequests();
     
     if (pendingRequests.length === 0) {
-      ////console.log('✅ No hay peticiones pendientes');
+      this.isSyncing = false;
       return;
     }
 
-    ////console.log(`🔄 Sincronizando ${pendingRequests.length} peticiones pendientes...`);
+    console.log(`🔄 Sincronizando ${pendingRequests.length} acción(es) automáticamente...`);
     
     let successCount = 0;
-    let failCount = 0;
 
     for (const request of pendingRequests) {
       try {
         await this.executeRequest(request);
         await this.deletePendingRequest(request.id);
         successCount++;
+        console.log(`✅ Sincronizada: ${request.method} ${request.url}`);
       } catch (error) {
-        ////console.error('❌ Error al sincronizar petición:', error);
-        failCount++;
+        console.error('❌ Error al sincronizar:', error);
         
         // Incrementar intentos
         request.retries++;
         
-        // Si supera 3 intentos, eliminar
-        if (request.retries >= 3) {
-          ////console.warn('⚠️ Petición eliminada tras 3 intentos fallidos');
+        // Si supera 5 intentos, eliminar
+        if (request.retries >= 5) {
+          console.warn('⚠️ Acción eliminada tras 5 intentos fallidos');
           await this.deletePendingRequest(request.id);
         }
       }
     }
 
-    this.showSyncNotification(successCount, failCount);
+    if (successCount > 0) {
+      console.log(`✅ ${successCount} acción(es) sincronizada(s) correctamente`);
+    }
+
+    this.isSyncing = false;
+
+    // Recargar la página solo si se sincronizaron datos
+    if (successCount > 0) {
+      console.log('🔄 Recargando datos actualizados...');
+      window.location.reload();
+    }
   }
 
   // Ejecutar una petición HTTP
@@ -194,15 +207,14 @@ export class OfflineSyncService {
     if (this.isOnline()) {
       return this.http.post(url, body, { headers }).pipe(
         catchError(error => {
-          //console.error('Error en POST, guardando para sincronizar:', error);
           return from(this.savePendingRequest('POST', url, body, headers)).pipe(
-            switchMap(() => of({ offline: true, message: 'Guardado para sincronizar' }))
+            switchMap(() => of({ offline: true, message: 'Acción guardada, se sincronizará automáticamente' }))
           );
         })
       );
     } else {
       return from(this.savePendingRequest('POST', url, body, headers)).pipe(
-        switchMap(() => of({ offline: true, message: 'Guardado para sincronizar cuando haya conexión' }))
+        switchMap(() => of({ offline: true, message: 'Sin conexión - Se sincronizará automáticamente al reconectar' }))
       );
     }
   }
@@ -212,15 +224,14 @@ export class OfflineSyncService {
     if (this.isOnline()) {
       return this.http.put(url, body, { headers }).pipe(
         catchError(error => {
-          //console.error('Error en PUT, guardando para sincronizar:', error);
           return from(this.savePendingRequest('PUT', url, body, headers)).pipe(
-            switchMap(() => of({ offline: true, message: 'Guardado para sincronizar' }))
+            switchMap(() => of({ offline: true, message: 'Acción guardada, se sincronizará automáticamente' }))
           );
         })
       );
     } else {
       return from(this.savePendingRequest('PUT', url, body, headers)).pipe(
-        switchMap(() => of({ offline: true, message: 'Guardado para sincronizar cuando haya conexión' }))
+        switchMap(() => of({ offline: true, message: 'Sin conexión - Se sincronizará automáticamente al reconectar' }))
       );
     }
   }
@@ -230,45 +241,16 @@ export class OfflineSyncService {
     if (this.isOnline()) {
       return this.http.delete(url, { headers }).pipe(
         catchError(error => {
-          //console.error('Error en DELETE, guardando para sincronizar:', error);
           return from(this.savePendingRequest('DELETE', url, undefined, headers)).pipe(
-            switchMap(() => of({ offline: true, message: 'Guardado para sincronizar' }))
+            switchMap(() => of({ offline: true, message: 'Acción guardada, se sincronizará automáticamente' }))
           );
         })
       );
     } else {
       return from(this.savePendingRequest('DELETE', url, undefined, headers)).pipe(
-        switchMap(() => of({ offline: true, message: 'Guardado para sincronizar cuando haya conexión' }))
+        switchMap(() => of({ offline: true, message: 'Sin conexión - Se sincronizará automáticamente al reconectar' }))
       );
     }
-  }
-
-  // Mostrar notificación de modo offline
-  private showOfflineNotification(): void {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('Modo Offline', {
-        body: 'La acción se guardó y se completará cuando haya conexión',
-        icon: '/icons/icon-192x192.png',
-        badge: '/icons/icon-72x72.png'
-      });
-    }
-  }
-
-  // Mostrar notificación de sincronización completada
-  private showSyncNotification(success: number, failed: number): void {
-    const message = failed === 0 
-      ? `${success} acción${success !== 1 ? 'es' : ''} sincronizada${success !== 1 ? 's' : ''} correctamente`
-      : `${success} exitosa${success !== 1 ? 's' : ''}, ${failed} fallida${failed !== 1 ? 's' : ''}`;
-
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification('Sincronización completada', {
-        body: message,
-        icon: '/icons/icon-192x192.png',
-        badge: '/icons/icon-72x72.png'
-      });
-    }
-
-    //console.log(`✅ Sincronización: ${message}`);
   }
 
   // Obtener número de peticiones pendientes
@@ -289,7 +271,7 @@ export class OfflineSyncService {
       const request = store.clear();
 
       request.onsuccess = () => {
-        //console.log('🗑️ Todas las peticiones pendientes eliminadas');
+        console.log('🗑️ Todas las peticiones pendientes eliminadas');
         resolve();
       };
       request.onerror = () => reject(request.error);
