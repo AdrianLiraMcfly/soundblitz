@@ -92,13 +92,13 @@ validarCode(code: string, email: string, recaptchaToken: string): Observable<any
   // POST /api/canciones - Crear canción
   crearCancion(data: any): Observable<any> {
     return this.http.post(`${this.apiUrl}/canciones`, data, { 
-      headers: this.getAuthHeaders() 
+      headers: this.getAuthHeadersWithoutContentType() 
     });
   }
 
 crearCancionFormData(formData: FormData): Observable<any> {
   return this.http.post(`${this.apiUrl}/canciones`, formData, { 
-    headers: this.getAuthHeaders()
+    headers: this.getAuthHeadersWithoutContentType()
   });
 }
 
