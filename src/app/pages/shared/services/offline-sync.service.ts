@@ -1,4 +1,3 @@
-// offline-sync.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, from, of } from 'rxjs';
@@ -12,6 +11,8 @@ interface PendingRequest {
   headers?: any;
   timestamp: number;
   retries: number;
+  isFormData?: boolean; // ✅ NUEVO: Indica si es FormData
+  formDataFields?: { key: string; value: any; isFile?: boolean; fileName?: string }[]; // ✅ NUEVO: Para reconstruir FormData
 }
 
 @Injectable({
@@ -68,6 +69,65 @@ export class OfflineSyncService {
     return navigator.onLine;
   }
 
+  // ✅ NUEVO: Convertir FormData a formato serializable
+  private async serializeFormData(formData: FormData): Promise<{ key: string; value: any; isFile?: boolean; fileName?: string }[]> {
+    const fields: { key: string; value: any; isFile?: boolean; fileName?: string }[] = [];
+    
+    for (const [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        // Convertir archivo a base64
+        const base64 = await this.fileToBase64(value);
+        fields.push({
+          key,
+          value: base64,
+          isFile: true,
+          fileName: value.name
+        });
+      } else {
+        fields.push({
+          key,
+          value: value
+        });
+      }
+    }
+    
+    return fields;
+  }
+
+  // ✅ NUEVO: Convertir File a base64
+  private fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // ✅ NUEVO: Reconstruir FormData desde campos serializados
+  private async reconstructFormData(fields: { key: string; value: any; isFile?: boolean; fileName?: string }[]): Promise<FormData> {
+    const formData = new FormData();
+    
+    for (const field of fields) {
+      if (field.isFile && field.fileName) {
+        // Convertir base64 de vuelta a File
+        const file = await this.base64ToFile(field.value, field.fileName);
+        formData.append(field.key, file, field.fileName);
+      } else {
+        formData.append(field.key, field.value);
+      }
+    }
+    
+    return formData;
+  }
+
+  // ✅ NUEVO: Convertir base64 a File
+  private async base64ToFile(base64: string, fileName: string): Promise<File> {
+    const response = await fetch(base64);
+    const blob = await response.blob();
+    return new File([blob], fileName, { type: blob.type });
+  }
+
   // Guardar petición pendiente
   async savePendingRequest(
     method: 'POST' | 'PUT' | 'DELETE',
@@ -80,14 +140,27 @@ export class OfflineSyncService {
     }
 
     const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // ✅ Detectar si es FormData
+    const isFormData = body instanceof FormData;
+    let serializedBody = body;
+    let formDataFields;
+
+    if (isFormData) {
+      formDataFields = await this.serializeFormData(body);
+      serializedBody = null; // No guardamos FormData directamente
+    }
+
     const request: PendingRequest = {
       id,
       method,
       url,
-      body,
+      body: serializedBody,
       headers,
       timestamp: Date.now(),
-      retries: 0
+      retries: 0,
+      isFormData,
+      formDataFields
     };
 
     return new Promise((resolve, reject) => {
@@ -152,6 +225,7 @@ export class OfflineSyncService {
     //console.log(`🔄 Sincronizando ${pendingRequests.length} acción(es) automáticamente...`);
     
     let successCount = 0;
+    let failCount = 0;
 
     for (const request of pendingRequests) {
       try {
@@ -161,40 +235,44 @@ export class OfflineSyncService {
         //console.log(`✅ Sincronizada: ${request.method} ${request.url}`);
       } catch (error) {
         //console.error('❌ Error al sincronizar:', error);
+        failCount++;
         
-        // Incrementar intentos
-        request.retries++;
-        
-        // Si supera 5 intentos, eliminar
-        if (request.retries >= 5) {
-          //console.warn('⚠️ Acción eliminada tras 5 intentos fallidos');
-          await this.deletePendingRequest(request.id);
-        }
+        // ✅ Al primer intento fallido, eliminar inmediatamente
+        await this.deletePendingRequest(request.id);
+        //console.warn('⚠️ Petición eliminada por error en sincronización');
       }
-    }
-
-    if (successCount > 0) {
-      //console.log(`✅ ${successCount} acción(es) sincronizada(s) correctamente`);
     }
 
     this.isSyncing = false;
 
-    // Recargar la página solo si se sincronizaron datos
+    // Mostrar mensaje según resultado
+    if (failCount > 0) {
+      //console.error(`❌ No se pudieron sincronizar ${failCount} acción(es). Peticiones eliminadas.`);
+      alert(`No se pudieron sincronizar ${failCount} acción(es). Por favor, intenta nuevamente.`);
+    }
+
+    // Recargar la página solo si se sincronizaron datos exitosamente
     if (successCount > 0) {
-      //console.log('🔄 Recargando datos actualizados...');
+      //console.log(`✅ ${successCount} acción(es) sincronizada(s) correctamente`);
       window.location.reload();
     }
   }
 
   // Ejecutar una petición HTTP
-  private executeRequest(request: PendingRequest): Promise<any> {
+  private async executeRequest(request: PendingRequest): Promise<any> {
     const headers = new HttpHeaders(request.headers || {});
+    let body = request.body;
+
+    // ✅ Reconstruir FormData si es necesario
+    if (request.isFormData && request.formDataFields) {
+      body = await this.reconstructFormData(request.formDataFields);
+    }
 
     switch (request.method) {
       case 'POST':
-        return this.http.post(request.url, request.body, { headers }).toPromise();
+        return this.http.post(request.url, body, { headers }).toPromise();
       case 'PUT':
-        return this.http.put(request.url, request.body, { headers }).toPromise();
+        return this.http.put(request.url, body, { headers }).toPromise();
       case 'DELETE':
         return this.http.delete(request.url, { headers }).toPromise();
       default:
