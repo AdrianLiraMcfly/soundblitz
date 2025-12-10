@@ -53,7 +53,7 @@ export class OfflineSyncService {
   // Configurar listener para cuando vuelve la conexión
   private setupOnlineListener(): void {
     window.addEventListener('online', () => {
-      console.log('🌐 Conexión restaurada - Sincronizando automáticamente...');
+      //console.log('🌐 Conexión restaurada - Sincronizando automáticamente...');
       this.syncPendingRequests();
     });
 
@@ -96,7 +96,7 @@ export class OfflineSyncService {
       const addRequest = store.add(request);
 
       addRequest.onsuccess = () => {
-        console.log('💾 Acción guardada - Se sincronizará automáticamente:', method, url);
+        //console.log('💾 Acción guardada - Se sincronizará automáticamente:', method, url);
         resolve(id);
       };
       addRequest.onerror = () => reject(addRequest.error);
@@ -149,7 +149,7 @@ export class OfflineSyncService {
       return;
     }
 
-    console.log(`🔄 Sincronizando ${pendingRequests.length} acción(es) automáticamente...`);
+    //console.log(`🔄 Sincronizando ${pendingRequests.length} acción(es) automáticamente...`);
     
     let successCount = 0;
 
@@ -158,30 +158,30 @@ export class OfflineSyncService {
         await this.executeRequest(request);
         await this.deletePendingRequest(request.id);
         successCount++;
-        console.log(`✅ Sincronizada: ${request.method} ${request.url}`);
+        //console.log(`✅ Sincronizada: ${request.method} ${request.url}`);
       } catch (error) {
-        console.error('❌ Error al sincronizar:', error);
+        //console.error('❌ Error al sincronizar:', error);
         
         // Incrementar intentos
         request.retries++;
         
         // Si supera 5 intentos, eliminar
         if (request.retries >= 5) {
-          console.warn('⚠️ Acción eliminada tras 5 intentos fallidos');
+          //console.warn('⚠️ Acción eliminada tras 5 intentos fallidos');
           await this.deletePendingRequest(request.id);
         }
       }
     }
 
     if (successCount > 0) {
-      console.log(`✅ ${successCount} acción(es) sincronizada(s) correctamente`);
+      //console.log(`✅ ${successCount} acción(es) sincronizada(s) correctamente`);
     }
 
     this.isSyncing = false;
 
     // Recargar la página solo si se sincronizaron datos
     if (successCount > 0) {
-      console.log('🔄 Recargando datos actualizados...');
+      //console.log('🔄 Recargando datos actualizados...');
       window.location.reload();
     }
   }
@@ -271,7 +271,7 @@ export class OfflineSyncService {
       const request = store.clear();
 
       request.onsuccess = () => {
-        console.log('🗑️ Todas las peticiones pendientes eliminadas');
+        //console.log('🗑️ Todas las peticiones pendientes eliminadas');
         resolve();
       };
       request.onerror = () => reject(request.error);
