@@ -157,9 +157,8 @@ onLogin(): void {
     next: (response) => {
       //console.log('📥 Respuesta del login:', response);
       
-      // ✅ El backend responde con { email } cuando es exitoso
-      // o con { message } cuando falla
-      if (response.email) {
+      // ✅ El backend responde con { status: 200, message } cuando es exitoso
+      if (response.status === 200 || response.message?.includes('Código enviado')) {
         // Credenciales correctas, código enviado
         if (this.loginData.rememberMe) {
           localStorage.setItem('rememberUser', 'true');
@@ -174,8 +173,8 @@ onLogin(): void {
         // Redirigir a verify-code con el email
         this.router.navigate(['/verify-code'], {
           state: { 
-            email: response.email,
-            message: 'Código enviado a tu email'
+            email: this.loginData.email,
+            message: response.message || 'Código enviado a tu email'
           }
         });
       } else {
