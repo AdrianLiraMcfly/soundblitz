@@ -155,9 +155,12 @@ onLogin(): void {
 
   this.apiServices.login(credentials).subscribe({
     next: (response) => {
-      console.log('📥 Respuesta del login:', response);
+      //console.log('📥 Respuesta del login:', response);
       
-      if (response.success) {
+      // ✅ El backend responde con { email } cuando es exitoso
+      // o con { message } cuando falla
+      if (response.email) {
+        // Credenciales correctas, código enviado
         if (this.loginData.rememberMe) {
           localStorage.setItem('rememberUser', 'true');
           localStorage.setItem('userEmail', this.loginData.email);
@@ -171,8 +174,8 @@ onLogin(): void {
         // Redirigir a verify-code con el email
         this.router.navigate(['/verify-code'], {
           state: { 
-            email: this.loginData.email,
-            message: response.message || 'Código enviado a tu email'
+            email: response.email,
+            message: 'Código enviado a tu email'
           }
         });
       } else {
