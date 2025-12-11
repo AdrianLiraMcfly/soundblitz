@@ -362,7 +362,7 @@ agregarCancion(event: Event): void {
     },
     error: (error) => {
       clearInterval(interval);
-      //console.error('❌ Error al agregar canción:', error);
+      //console.error('❌ Error al agregar canción:', error);vkgfytytfiytfoutfoutfoftfo
 
       if (error.status === 500) {
         this.error = error.error?.message || 'Error del servidor. Verifica los logs del backend.';
